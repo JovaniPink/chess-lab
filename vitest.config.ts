@@ -13,7 +13,7 @@ export default defineConfig({
   test: {
     environment: "jsdom",
     setupFiles: ["./vitest.setup.ts"],
-    exclude: ["tests/rendered-html.test.mjs", "**/node_modules/**", "**/dist/**"],
+    exclude: ["tests/*.test.mjs", "**/node_modules/**", "**/dist/**"],
     coverage: {
       reporter: ["text", "html"],
     },

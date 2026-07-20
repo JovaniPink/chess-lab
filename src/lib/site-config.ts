@@ -15,7 +15,11 @@ function normalizeAppEnv(value?: string) {
   }
 }
 
-export const appEnv = normalizeAppEnv(process.env.NEXT_PUBLIC_APP_ENV);
+export const appEnv = normalizeAppEnv(process.env.NEXT_PUBLIC_APP_ENV ?? process.env.CONTEXT);
 export const isProduction = appEnv === "prd";
-export const configuredSiteUrl =
-  process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") || "http://localhost:5173";
+export const configuredSiteUrl = (
+  process.env.NEXT_PUBLIC_SITE_URL ??
+  process.env.DEPLOY_PRIME_URL ??
+  process.env.URL ??
+  "http://localhost:5173"
+).replace(/\/$/, "");

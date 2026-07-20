@@ -27,6 +27,8 @@ const eslintConfig = defineConfig([
     "next-env.d.ts",
     ".sites-runtime/**",
     ".wrangler/**",
+    ".netlify/**",
+    "dist/**",
     "coverage/**",
   ]),
 ]);
