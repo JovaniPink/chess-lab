@@ -60,13 +60,13 @@ export function ChessLab() {
   const inExplore = state.matches("explore");
   const currentPly = Math.min(state.context.currentPly, game.moves.length);
   const currentLesson = jovaniStudy.lessons[state.context.lessonIndex];
-  const lineChess = useMemo(() => chessAtPly(game.moves, currentPly), [currentPly, game.moves]);
+  const lineChess = useMemo(() => chessAtPly(game, currentPly), [currentPly, game]);
   const practiceChess = useMemo(() => {
     if (!inPractice) return null;
     return state.context.submittedAnswer
       ? new Chess(state.context.submittedAnswer.fen)
-      : chessAtPly(game.moves, currentLesson.setupPly);
-  }, [currentLesson.setupPly, game.moves, inPractice, state.context.submittedAnswer]);
+      : chessAtPly(game, currentLesson.setupPly);
+  }, [currentLesson.setupPly, game, inPractice, state.context.submittedAnswer]);
   const boardChess = useMemo(() => {
     if (inExplore) return new Chess(state.context.branchFen || lineChess.fen());
     if (practiceChess) return practiceChess;
@@ -109,7 +109,7 @@ export function ChessLab() {
     }
 
     if (state.matches("practice")) {
-      const chess = chessAtPly(game.moves, currentLesson.setupPly);
+      const chess = chessAtPly(game, currentLesson.setupPly);
       const move = playMove(chess, from, to, promotion);
       if (!move) return false;
       const candidate = candidateForMove(currentLesson, move.san);
@@ -128,7 +128,7 @@ export function ChessLab() {
 
   function submitCandidate(candidate: CandidateMove) {
     if (!state.matches("practice")) return;
-    const chess = chessAtPly(game.moves, currentLesson.setupPly);
+    const chess = chessAtPly(game, currentLesson.setupPly);
     const move = moveFromSan(chess, candidate.san);
 
     if (move) {

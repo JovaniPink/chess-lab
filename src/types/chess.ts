@@ -51,6 +51,7 @@ export type ParsedGame = {
   result: string;
   event?: string;
   date?: string;
+  initialFen: string;
   moves: MoveRecord[];
   pgn: string;
   isCheckmate: boolean;

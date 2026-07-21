@@ -86,7 +86,7 @@ npm run deploy:netlify
 npm run deploy:netlify:prod
 ```
 
-Netlify's `CONTEXT`, `DEPLOY_PRIME_URL`, and `URL` values are used automatically for environment-aware indexing and canonical metadata. Deploy previews remain non-indexed; the production context is indexable.
+The Netlify build converts `CONTEXT` into the public application environment and embeds the current deploy URL in the server bundle. Deploy previews remain non-indexed; the production context is indexable even though build-only Netlify variables are unavailable inside the running function.
 
 ## Architecture
 

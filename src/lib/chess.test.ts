@@ -21,30 +21,30 @@ describe("bundled chess study", () => {
     [26, "r1b1k2r/pp3ppp/1q2p3/2b1n3/3N4/3P4/PPP2PPP/R2QKB1R w KQkq - 0 14"],
     [28, "r1b1k2r/pp3ppp/1q2p3/4n3/8/3P1N2/PPP2bPP/R2QKB1R w KQkq - 0 15"],
   ])("reconstructs the critical position at ply %i", (ply, fen) => {
-    expect(chessAtPly(game.moves, ply).fen()).toBe(fen);
+    expect(chessAtPly(game, ply).fen()).toBe(fen);
   });
 
   it("keeps every coached move legal and the intentionally illegal capture unavailable", () => {
     for (const lesson of jovaniStudy.lessons.slice(0, -1)) {
-      const chess = chessAtPly(game.moves, lesson.setupPly);
+      const chess = chessAtPly(game, lesson.setupPly);
       for (const candidate of lesson.candidates) {
         expect(moveFromSan(chess, candidate.san), `${lesson.id}: ${candidate.san}`).not.toBeNull();
       }
     }
 
     const finalLesson = jovaniStudy.lessons.at(-1)!;
-    const finalPosition = chessAtPly(game.moves, finalLesson.setupPly);
+    const finalPosition = chessAtPly(game, finalLesson.setupPly);
     expect(finalPosition.moves().sort()).toEqual(["Kd2", "Ke2"]);
     expect(moveFromSan(finalPosition, "Kxf2")).toBeNull();
   });
 
   it("verifies that Ke2 permits Qe3 checkmate while Kd2 continues", () => {
-    const afterCheck = chessAtPly(game.moves, 28);
+    const afterCheck = chessAtPly(game, 28);
     afterCheck.move("Ke2");
     afterCheck.move("Qe3#");
     expect(afterCheck.isCheckmate()).toBe(true);
 
-    const alternative = chessAtPly(game.moves, 28);
+    const alternative = chessAtPly(game, 28);
     alternative.move("Kd2");
     expect(alternative.isCheckmate()).toBe(false);
   });
@@ -68,5 +68,15 @@ describe("bundled chess study", () => {
       result: "1-0",
       isCheckmate: true,
     });
+  });
+
+  it("replays a valid PGN from its custom FEN starting position", () => {
+    const imported = parsePgn(
+      `[SetUp "1"]\n[FEN "7k/P7/8/8/8/8/8/7K w - - 0 1"]\n[Result "*"]\n\n1. a8=Q+ *`,
+    );
+
+    expect(imported.initialFen).toBe("7k/P7/8/8/8/8/8/7K w - - 0 1");
+    expect(chessAtPly(imported, 0).fen()).toBe(imported.initialFen);
+    expect(chessAtPly(imported, 1).fen()).toBe("Q6k/8/8/8/8/8/8/7K b - - 0 1");
   });
 });

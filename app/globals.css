@@ -1126,8 +1126,7 @@ input[type="range"] {
     padding: 0 16px;
   }
   .brand-lockup span,
-  .status-pill,
-  .top-actions .button-ghost {
+  .status-pill {
     display: none;
   }
   .hero-strip {
@@ -1161,6 +1160,18 @@ input[type="range"] {
 }
 
 @media (max-width: 520px) {
+  .topbar {
+    height: auto;
+    min-height: 74px;
+    padding-top: 12px;
+    padding-bottom: 12px;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .top-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
   .hero-strip {
     padding-top: 24px;
   }

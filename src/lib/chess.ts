@@ -28,6 +28,7 @@ export function parsePgn(pgn: string): ParsedGame {
   const chess = new Chess();
   chess.loadPgn(pgn.trim());
   const headers = chess.getHeaders();
+  const initialFen = headers.FEN ?? new Chess().fen();
   const moves = chess.history({ verbose: true }).map((move): MoveRecord => ({
     from: move.from,
     to: move.to,
@@ -43,17 +44,18 @@ export function parsePgn(pgn: string): ParsedGame {
     result: headers.Result || inferResult(chess),
     event: headers.Event,
     date: headers.Date,
+    initialFen,
     moves,
     pgn: chess.pgn(),
     isCheckmate: chess.isCheckmate(),
   };
 }
 
-export function chessAtPly(moves: MoveRecord[], ply: number): Chess {
-  const chess = new Chess();
-  const boundedPly = Math.max(0, Math.min(ply, moves.length));
+export function chessAtPly(game: Pick<ParsedGame, "initialFen" | "moves">, ply: number): Chess {
+  const chess = new Chess(game.initialFen);
+  const boundedPly = Math.max(0, Math.min(ply, game.moves.length));
 
-  for (const move of moves.slice(0, boundedPly)) {
+  for (const move of game.moves.slice(0, boundedPly)) {
     chess.move({ from: move.from, to: move.to, promotion: move.promotion ?? "q" });
   }
 
