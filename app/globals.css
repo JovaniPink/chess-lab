@@ -213,6 +213,48 @@ button {
   font-weight: 800;
 }
 
+.study-facts {
+  max-width: 1500px;
+  margin: 0 auto 18px;
+  padding: 0 clamp(20px, 4vw, 64px);
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  list-style: none;
+}
+.study-facts li {
+  min-height: 66px;
+  padding: 13px 18px;
+  border-block: 1px solid var(--line);
+  border-left: 1px solid var(--line);
+  background: rgba(255, 254, 250, 0.62);
+}
+.study-facts li:first-child {
+  border-radius: 13px 0 0 13px;
+}
+.study-facts li:last-child {
+  border-right: 1px solid var(--line);
+  border-radius: 0 13px 13px 0;
+}
+.study-facts strong,
+.study-facts span {
+  display: block;
+}
+.study-facts strong {
+  color: var(--forest);
+  font-family: var(--font-fraunces), Georgia, serif;
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.1;
+}
+.study-facts span {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
 .mode-tabs {
   max-width: 1500px;
   margin: 0 auto 18px;
@@ -914,6 +956,29 @@ input[type="range"] {
   color: var(--lime);
 }
 
+.site-footer {
+  max-width: 1500px;
+  margin: 58px auto 0;
+  padding: 24px clamp(20px, 4vw, 64px) 0;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 24px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.5;
+}
+.site-footer p {
+  margin: 0;
+  color: var(--forest);
+  font-weight: 900;
+  white-space: nowrap;
+}
+.site-footer span {
+  text-align: right;
+}
+
 .button-base {
   border: 0;
   border-radius: 9px;
@@ -1109,6 +1174,7 @@ input[type="range"] {
     padding: 0 18px;
   }
   .hero-strip,
+  .study-facts,
   .mode-tabs {
     padding-left: 20px;
     padding-right: 20px;
@@ -1134,6 +1200,9 @@ input[type="range"] {
   }
   .result-card {
     display: none;
+  }
+  .study-facts {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
   .workspace-grid {
     grid-template-columns: 1fr;
@@ -1181,6 +1250,24 @@ input[type="range"] {
   .mode-tabs {
     overflow-x: auto;
   }
+  .study-facts {
+    grid-template-columns: 1fr;
+  }
+  .study-facts li,
+  .study-facts li:first-child,
+  .study-facts li:last-child {
+    min-height: 54px;
+    border: 1px solid var(--line);
+    border-bottom: 0;
+    border-radius: 0;
+  }
+  .study-facts li:first-child {
+    border-radius: 12px 12px 0 0;
+  }
+  .study-facts li:last-child {
+    border-bottom: 1px solid var(--line);
+    border-radius: 0 0 12px 12px;
+  }
   .mode-tabs button {
     white-space: nowrap;
   }
@@ -1216,6 +1303,14 @@ input[type="range"] {
   }
   .next-number {
     display: none;
+  }
+  .site-footer {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .site-footer span {
+    text-align: left;
   }
 }
 

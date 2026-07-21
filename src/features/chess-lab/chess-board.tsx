@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import type { Chess, Color, PieceSymbol, Square } from "chess.js";
 import { cn } from "@/lib/utils";
 import type { MoveRecord } from "@/types/chess";
@@ -41,6 +41,9 @@ export function ChessBoard({
   const [selected, setSelected] = useState<Square | null>(null);
   const [promotion, setPromotion] = useState<{ from: Square; to: Square } | null>(null);
   const buttonRefs = useRef<Partial<Record<Square, HTMLButtonElement>>>({});
+  const firstPromotionRef = useRef<HTMLButtonElement>(null);
+  const boardHelpId = useId();
+  const promotionTitleId = useId();
 
   const files = useMemo(
     () =>
@@ -54,6 +57,10 @@ export function ChessBoard({
   const legalMoves = selected ? chess.moves({ square: selected, verbose: true }) : [];
   const legalTargets = legalMoves.map((move) => move.to);
   const initialFocusSquare = (flipped ? "e7" : "e2") as Square;
+
+  useEffect(() => {
+    if (promotion) firstPromotionRef.current?.focus();
+  }, [promotion]);
 
   function chooseSquare(square: Square) {
     if (!interactive || promotion) return;
@@ -86,6 +93,12 @@ export function ChessBoard({
     setPromotion(null);
   }
 
+  function cancelPromotion() {
+    const origin = promotion?.from;
+    setPromotion(null);
+    if (origin) buttonRefs.current[origin]?.focus();
+  }
+
   function moveFocus(square: Square, event: React.KeyboardEvent<HTMLButtonElement>) {
     const keyDeltas: Partial<Record<string, [number, number]>> = {
       ArrowLeft: [0, -1],
@@ -111,6 +124,7 @@ export function ChessBoard({
         className={cn("chess-board", interactive && "interactive-board")}
         role="grid"
         aria-label={`Chess board: ${positionLabel}`}
+        aria-describedby={interactive ? boardHelpId : undefined}
       >
         {ranks.flatMap((rank, rankIndex) =>
           files.map((file, fileIndex) => {
@@ -172,16 +186,36 @@ export function ChessBoard({
         )}
       </div>
 
+      {interactive && (
+        <p id={boardHelpId} className="sr-only">
+          Use the arrow keys to move between squares. Press Enter or Space to select a piece and its
+          destination.
+        </p>
+      )}
+
       {promotion && (
-        <div className="promotion-picker" role="dialog" aria-label="Choose promotion piece">
-          <span>Promote to</span>
-          {promotionPieces.map((piece) => (
-            <button key={piece} type="button" onClick={() => choosePromotion(piece)}>
+        <div
+          className="promotion-picker"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby={promotionTitleId}
+          onKeyDown={(event) => {
+            if (event.key === "Escape") cancelPromotion();
+          }}
+        >
+          <span id={promotionTitleId}>Promote to</span>
+          {promotionPieces.map((piece, index) => (
+            <button
+              ref={index === 0 ? firstPromotionRef : undefined}
+              key={piece}
+              type="button"
+              onClick={() => choosePromotion(piece)}
+            >
               <span aria-hidden="true">{pieceGlyph[chess.turn()][piece]}</span>
               <span className="sr-only">{pieceName[piece]}</span>
             </button>
           ))}
-          <button type="button" className="promotion-cancel" onClick={() => setPromotion(null)}>
+          <button type="button" className="promotion-cancel" onClick={cancelPromotion}>
             Cancel
           </button>
         </div>

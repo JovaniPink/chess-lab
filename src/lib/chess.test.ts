@@ -2,6 +2,7 @@ import { Chess } from "chess.js";
 import { describe, expect, it } from "vitest";
 import { jovaniStudy } from "@/content/jovani-study";
 import { chessAtPly, moveFromSan, parsePgn, pgnImportSchema, playMove } from "@/lib/chess";
+import { lessonSchema } from "@/types/chess";
 
 describe("bundled chess study", () => {
   const game = parsePgn(jovaniStudy.pgn);
@@ -78,5 +79,17 @@ describe("bundled chess study", () => {
     expect(imported.initialFen).toBe("7k/P7/8/8/8/8/8/7K w - - 0 1");
     expect(chessAtPly(imported, 0).fen()).toBe(imported.initialFen);
     expect(chessAtPly(imported, 1).fen()).toBe("Q6k/8/8/8/8/8/8/7K b - - 0 1");
+  });
+
+  it("requires one matching correct candidate and unique candidate notation", () => {
+    const lesson = jovaniStudy.lessons[0];
+    expect(lessonSchema.safeParse(lesson).success).toBe(true);
+    expect(
+      lessonSchema.safeParse({
+        ...lesson,
+        candidates: [lesson.candidates[0], lesson.candidates[0]],
+      }).success,
+    ).toBe(false);
+    expect(lessonSchema.safeParse({ ...lesson, correctSan: "e5" }).success).toBe(false);
   });
 });

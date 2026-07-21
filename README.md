@@ -24,7 +24,7 @@ Imported games and lesson progress are intentionally session-only. The first rel
 - React Hook Form and Zod
 - Tailwind CSS 4 and component-scoped design classes
 - Vitest and Testing Library
-- Dual deployment targets: Cloudflare Worker-compatible Sites and Netlify Functions through Nitro
+- Netlify Functions deployment through Vinext, Vite, and Nitro
 
 ## Local development
 
@@ -58,8 +58,6 @@ npm run typecheck
 npm run test
 npm run build
 npm run test:artifact
-npm run build:netlify
-npm run test:netlify-artifact
 ```
 
 ## Netlify
@@ -75,8 +73,8 @@ npx netlify init
 To test the complete Netlify build locally:
 
 ```bash
-npm run build:netlify
-npm run test:netlify-artifact
+npm run build
+npm run test:artifact
 ```
 
 Once the directory is linked, preview and production deploys are available through:
@@ -94,7 +92,7 @@ The Netlify build converts `CONTEXT` into the public application environment and
 - `src/content/` contains the validated bundled study.
 - `src/features/chess-lab/` contains the product state machine and interface modules.
 - `src/lib/` contains PGN parsing, board reconstruction, and shared utilities.
-- `worker/` and `vite.config.ts` preserve the Sites/Vinext Cloudflare runtime.
-- `vite.config.netlify.ts` and `netlify.toml` provide the parallel Nitro/Netlify runtime without changing the application code.
+- `vite.config.ts` builds Vinext through Nitro's Netlify preset.
+- `netlify.toml` defines the production build, publish directory, local proxy, and security headers.
 
 The review, practice, feedback, playing, and exploration modes are explicit XState states. `chess.js` remains authoritative for move legality, FEN reconstruction, check, and checkmate.

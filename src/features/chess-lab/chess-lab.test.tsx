@@ -62,4 +62,19 @@ describe("ChessLab", () => {
     fireEvent(dialog, new Event("cancel", { bubbles: false, cancelable: true }));
     await waitFor(() => expect(dialog).not.toHaveAttribute("open"));
   });
+
+  it("keeps the player rows aligned with the board orientation", async () => {
+    const user = userEvent.setup();
+    const { container } = render(<ChessLab />);
+
+    const playerRows = () => container.querySelectorAll<HTMLElement>("[data-player-color]");
+    expect(playerRows()[0]).toHaveAttribute("data-player-color", "b");
+    expect(playerRows()[0]).toHaveTextContent("Computer");
+    expect(playerRows()[1]).toHaveAttribute("data-player-color", "w");
+    expect(playerRows()[1]).toHaveTextContent("Jovani Pink");
+
+    await user.click(screen.getByRole("button", { name: "Flip board" }));
+    expect(playerRows()[0]).toHaveAttribute("data-player-color", "w");
+    expect(playerRows()[1]).toHaveAttribute("data-player-color", "b");
+  });
 });

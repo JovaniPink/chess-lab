@@ -11,7 +11,7 @@ const netlifyCli = fileURLToPath(
   new URL("../node_modules/netlify-cli/bin/run.js", import.meta.url),
 );
 
-test("the packaged Netlify function renders the production Chess Lab", async () => {
+test("the packaged Netlify site serves the production Chess Lab", async () => {
   const port = await availablePort();
   const functionsPort = await availablePort();
   const output = [];

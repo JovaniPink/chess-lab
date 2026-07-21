@@ -1,7 +1,7 @@
 "use client";
 
 import { useMachine } from "@xstate/react";
-import { Chess, type PieceSymbol, type Square } from "chess.js";
+import { Chess, type Color, type PieceSymbol, type Square } from "chess.js";
 import {
   ArrowLeft,
   ArrowRight,
@@ -19,7 +19,7 @@ import {
   Target,
   Upload,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { type ReactNode, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { jovaniStudy } from "@/content/jovani-study";
 import {
@@ -86,6 +86,18 @@ export function ChessLab() {
     : inExplore
       ? `variation after ${state.context.branchMoves.length} branch moves`
       : currentMoveLabel;
+  const topColor: Color = flipped ? "w" : "b";
+  const bottomColor: Color = flipped ? "b" : "w";
+  const winnerColor: Color | null =
+    game.result === "1-0" ? "w" : game.result === "0-1" ? "b" : null;
+  const studyFacts = [
+    { value: String(game.moves.length), label: "Playable ply" },
+    {
+      value: isOriginal ? String(jovaniStudy.lessons.length) : "Legal",
+      label: isOriginal ? "Coached positions" : "Variation board",
+    },
+    { value: "Local", label: "Session-only data" },
+  ];
 
   function enterExplore() {
     send({ type: "EXPLORE", fen: lineChess.fen() });
@@ -231,6 +243,15 @@ export function ChessLab() {
         </div>
       </section>
 
+      <ul className="study-facts" aria-label="Study facts">
+        {studyFacts.map((fact) => (
+          <li key={fact.label}>
+            <strong>{fact.value}</strong>
+            <span>{fact.label}</span>
+          </li>
+        ))}
+      </ul>
+
       <nav className="mode-tabs" aria-label="Study modes">
         <button
           type="button"
@@ -261,20 +282,13 @@ export function ChessLab() {
 
       <div id="study-workspace" className="workspace-grid">
         <section className="board-column" aria-label="Chess board workspace">
-          <div className="player-row opponent">
-            <div className="avatar dark" aria-hidden="true">
-              {initials(game.black)}
-            </div>
-            <div>
-              <strong>{game.black}</strong>
-              <span>{boardChess.turn() === "b" ? "To move" : "Black"}</span>
-            </div>
-            {isOriginal && (
-              <span className="winner-badge">
-                <Flag size={13} /> Winner
-              </span>
-            )}
-          </div>
+          <PlayerRow
+            color={topColor}
+            game={game}
+            toMove={boardChess.turn() === topColor}
+            winner={winnerColor === topColor}
+            opponent
+          />
 
           <ChessBoard
             key={`${positionLabel}-${flipped}`}
@@ -286,23 +300,22 @@ export function ChessLab() {
             onMove={handleBoardMove}
           />
 
-          <div className="player-row">
-            <div className="avatar light" aria-hidden="true">
-              {initials(game.white)}
-            </div>
-            <div>
-              <strong>{game.white}</strong>
-              <span>{boardChess.turn() === "w" ? "To move" : "White"}</span>
-            </div>
-            <Button
-              tone="ghost"
-              size="icon"
-              onClick={() => setFlipped((value) => !value)}
-              aria-label="Flip board"
-            >
-              <FlipHorizontal2 size={17} />
-            </Button>
-          </div>
+          <PlayerRow
+            color={bottomColor}
+            game={game}
+            toMove={boardChess.turn() === bottomColor}
+            winner={winnerColor === bottomColor}
+            action={
+              <Button
+                tone="ghost"
+                size="icon"
+                onClick={() => setFlipped((value) => !value)}
+                aria-label="Flip board"
+              >
+                <FlipHorizontal2 size={17} />
+              </Button>
+            }
+          />
 
           {inReview && (
             <div className="playback-card">
@@ -417,6 +430,13 @@ export function ChessLab() {
 
       {isOriginal && <FailureSummary />}
 
+      <footer className="site-footer">
+        <p>Jovani Chess Lab</p>
+        <span>
+          Games and answers stay in this browser session. No account, upload, or engine service.
+        </span>
+      </footer>
+
       <p className="sr-only" role="status" aria-live="polite">
         {liveMessage}
       </p>
@@ -428,6 +448,43 @@ export function ChessLab() {
         onLoad={loadGame}
       />
     </main>
+  );
+}
+
+function PlayerRow({
+  color,
+  game,
+  toMove,
+  winner,
+  opponent = false,
+  action,
+}: {
+  color: Color;
+  game: ParsedGame;
+  toMove: boolean;
+  winner: boolean;
+  opponent?: boolean;
+  action?: ReactNode;
+}) {
+  const name = color === "w" ? game.white : game.black;
+  const colorName = color === "w" ? "White" : "Black";
+
+  return (
+    <div className={cn("player-row", opponent && "opponent")} data-player-color={color}>
+      <div className={cn("avatar", color === "w" ? "light" : "dark")} aria-hidden="true">
+        {initials(name)}
+      </div>
+      <div>
+        <strong>{name}</strong>
+        <span>{toMove ? "To move" : colorName}</span>
+      </div>
+      {winner && (
+        <span className="winner-badge">
+          <Flag size={13} /> Winner
+        </span>
+      )}
+      {action}
+    </div>
   );
 }
 
