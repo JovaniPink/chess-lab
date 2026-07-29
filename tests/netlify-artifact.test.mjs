@@ -53,6 +53,22 @@ test("the packaged Netlify site serves the production Chess Lab", async () => {
   }
 });
 
+test("the packaged Netlify function renders the root path", async () => {
+  const handlerUrl = pathToFileURL(
+    path.join(projectRoot, ".netlify/functions-internal/server/main.mjs"),
+  );
+  handlerUrl.searchParams.set("test", `${process.pid}-${Date.now()}`);
+  const { default: handler } = await import(handlerUrl.href);
+
+  const response = await handler(new Request("https://chess-labs.netlify.app/"));
+
+  assert.equal(response.status, 200);
+  assert.match(response.headers.get("content-type") ?? "", /^text\/html\b/i);
+  const html = await response.text();
+  assert.match(html, /Jovani Chess Lab/i);
+  assert.match(html, /One loose knight opened the road to mate/i);
+});
+
 test("the production bundle permits indexing", async () => {
   const handlerUrl = pathToFileURL(
     path.join(projectRoot, ".netlify/functions-internal/server/main.mjs"),
