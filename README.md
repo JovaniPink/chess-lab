@@ -31,7 +31,7 @@ Imported games and lesson progress are intentionally session-only. The first rel
 Requirements:
 
 - Node.js 22.15 or newer
-- npm
+- npm 10.9.2 when updating `package-lock.json`
 
 Install and run:
 
@@ -41,6 +41,10 @@ npm run dev
 ```
 
 Vite normally serves the app at `http://localhost:5173`.
+
+The repository records `npm@10.9.2` as its package manager because GitHub Actions
+uses Node 22.15.0 and that npm release. Keep manifest and lockfile updates on that
+version so `npm ci` validates the same graph locally and in CI.
 
 ## Quality gates
 
