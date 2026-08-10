@@ -100,3 +100,15 @@ The Netlify build converts `CONTEXT` into the public application environment and
 - `netlify.toml` defines the production build, publish directory, local proxy, and security headers.
 
 The review, practice, feedback, playing, and exploration modes are explicit XState states. `chess.js` remains authoritative for move legality, FEN reconstruction, check, and checkmate.
+
+## Training guides
+
+- [Systematic Chess Improvement](docs/systematic-chess-improvement.md) presents a
+  human-first loop for serious games, self-analysis, targeted practice, and
+  measurement.
+- [Chess Training Workbook](docs/systematic-chess-training-workbook.md) provides
+  reusable worksheets for applying that loop over a twelve-week cycle.
+
+These guides are practical coaching frameworks, not promises of a particular rating
+gain. Their schedules and percentage allocations are starting heuristics to adjust
+against the player's own error log and available time.
