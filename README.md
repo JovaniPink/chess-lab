@@ -88,7 +88,7 @@ npm run deploy:netlify
 npm run deploy:netlify:prod
 ```
 
-The Netlify build converts `CONTEXT` into the public application environment and embeds the current deploy URL in the server bundle. Deploy previews remain non-indexed; the production context is indexable even though build-only Netlify variables are unavailable inside the running function.
+The Netlify build converts `CONTEXT` into the public application environment and embeds the current deploy URL in the server bundle. Artifact validation follows that same contract: deploy previews must remain non-indexed and omit a sitemap from `robots.txt`, while the production context must be indexable and use the canonical production sitemap URL. A local `npm run build` defaults to the production contract when `CONTEXT` is unset.
 
 ## Architecture
 

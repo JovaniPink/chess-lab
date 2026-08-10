@@ -3,6 +3,8 @@ import path from "node:path";
 import process from "node:process";
 
 const projectRoot = process.cwd();
+const netlifyContext = process.env.CONTEXT ?? "production";
+const isProduction = netlifyContext === "production";
 const requiredFiles = [
   "dist/index.html",
   "dist/_redirects",
@@ -28,11 +30,17 @@ if (
 }
 
 const robots = await readFile(path.join(projectRoot, "dist/robots.txt"), "utf8");
-if (!/^Allow: \/$/m.test(robots) || /^Disallow: \/$/m.test(robots)) {
-  throw new Error("The production Netlify artifact is not indexable.");
-}
-if (!/Sitemap: https:\/\/chess-labs\.netlify\.app\/sitemap\.xml/.test(robots)) {
-  throw new Error("The production robots file does not use the canonical Netlify URL.");
+if (isProduction) {
+  if (!/^Allow: \/$/m.test(robots) || /^Disallow: \/$/m.test(robots)) {
+    throw new Error("The production Netlify artifact is not indexable.");
+  }
+  if (!/Sitemap: https:\/\/chess-labs\.netlify\.app\/sitemap\.xml/.test(robots)) {
+    throw new Error("The production robots file does not use the canonical Netlify URL.");
+  }
+} else if (!/^Disallow: \/$/m.test(robots) || /^Allow: \/$/m.test(robots)) {
+  throw new Error(`The ${netlifyContext} Netlify artifact must remain non-indexable.`);
+} else if (/^Sitemap:/m.test(robots)) {
+  throw new Error(`The ${netlifyContext} robots file must not advertise a sitemap.`);
 }
 
 const functionWrapper = await readFile(
@@ -47,5 +55,5 @@ if (!/path: "\/\*"/.test(functionWrapper)) {
 }
 
 console.log(
-  "Validated Netlify artifact: prerendered app, metadata routes, static assets, Nitro fallback, and routing are present.",
+  `Validated ${netlifyContext} Netlify artifact: prerendered app, metadata routes, static assets, Nitro fallback, robots policy, and routing are present.`,
 );
