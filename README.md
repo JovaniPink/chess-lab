@@ -10,10 +10,31 @@ The app reconstructs the complete game, explains the decision chain behind the l
 - Five guided lessons playable directly on the board or through accessible candidate controls
 - Legal variation exploration with promotion choice and branch reset
 - PGN importing with player, result, and move validation
+- Human-first imported-game review with memory capture, critical-position markers, one primary
+  error category, and one corrective drill
 - Board orientation controls, keyboard navigation, live status feedback, and reduced-motion support
 - Responsive layouts for desktop, tablet, and mobile
 
 Imported games and lesson progress are intentionally session-only. The first release has no accounts, database, analytics, or external engine service.
+
+## Imported-game review contract
+
+The review workflow appears only after a valid PGN import. It preserves the player's own account
+of the game before introducing outside analysis:
+
+1. Record immediate post-game thoughts and the suspected first important mistake.
+2. Replay the legal game and mark up to three critical positions.
+3. Classify one primary thinking error.
+4. Write one specific corrective drill.
+
+A review can be completed only after thoughts, at least one critical position, an error category,
+and a drill are present. Critical positions are stored by replay ply and are reconstructed through
+the existing `chess.js` path; copied board states and engine evaluations are not authoritative.
+
+The imported PGN, notes, markers, classification, and drill live only in React state for the open
+tab. They reset when another PGN is loaded or the bundled lesson is restored, and disappear on
+reload or tab close. Do not add browser storage, uploads, accounts, analytics, engines, or another
+external service without a separate product and privacy decision.
 
 ## Technology
 
