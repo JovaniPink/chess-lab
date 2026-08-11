@@ -315,6 +315,9 @@ button {
   position: sticky;
   top: 92px;
 }
+.study-panel.imported-review-panel {
+  position: static;
+}
 
 .player-row {
   gap: 11px;
@@ -683,6 +686,264 @@ input[type="range"] {
 .moments-list > .button-base {
   width: 100%;
   margin-top: 16px;
+}
+
+.human-review {
+  margin-top: 24px;
+  padding-top: 22px;
+  border-top: 1px solid var(--line);
+}
+.human-review-intro {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+.human-review-icon {
+  width: 34px;
+  height: 34px;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  background: var(--forest);
+  color: var(--lime);
+}
+.human-review-intro h3 {
+  margin: 5px 0 4px;
+  font-family: var(--font-fraunces), Georgia, serif;
+  font-size: 19px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+.human-review-intro > div:last-child > p:last-child {
+  margin: 0;
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.5;
+}
+.review-progress {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 5px;
+  margin: 18px 0;
+  padding: 0;
+  list-style: none;
+}
+.review-progress li {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--muted);
+  font-size: 8px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.review-progress li > span {
+  width: 15px;
+  height: 15px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: #f7f7f1;
+}
+.review-progress li.complete {
+  color: var(--forest);
+}
+.review-progress li.complete > span {
+  border-color: var(--forest);
+  background: var(--forest);
+  color: white;
+}
+.review-step {
+  margin-top: 12px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  background: #fafaf6;
+}
+.review-step-heading {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  margin-bottom: 13px;
+}
+.review-step-heading > span {
+  width: 22px;
+  height: 22px;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  border-radius: 7px;
+  background: #e8eee5;
+  color: var(--forest);
+  font-family: var(--font-ibm-plex-mono), monospace;
+  font-size: 9px;
+  font-weight: 900;
+}
+.review-step-heading strong {
+  display: block;
+  font-size: 11px;
+}
+.review-step-heading p {
+  margin: 2px 0 0;
+  color: var(--muted);
+  font-size: 9px;
+  line-height: 1.45;
+}
+.review-step label,
+.critical-position-card label {
+  display: block;
+  margin: 10px 0 6px;
+  font-size: 9px;
+  font-weight: 900;
+}
+.review-step textarea,
+.review-step input,
+.review-step select,
+.critical-position-card input {
+  width: 100%;
+  padding: 10px 11px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  outline: none;
+  background: white;
+  color: var(--ink);
+  font-size: 10px;
+  line-height: 1.45;
+}
+.review-step textarea {
+  resize: vertical;
+}
+.review-step select {
+  appearance: auto;
+}
+.review-step textarea:focus,
+.review-step input:focus,
+.review-step select:focus,
+.critical-position-card input:focus {
+  border-color: var(--forest-2);
+  box-shadow: 0 0 0 3px rgba(36, 93, 78, 0.1);
+}
+.current-position-marker {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px;
+  border-radius: 10px;
+  background: #edf3e7;
+}
+.current-position-marker > div {
+  min-width: 0;
+}
+.current-position-marker span,
+.current-position-marker strong {
+  display: block;
+}
+.current-position-marker span {
+  margin-bottom: 2px;
+  color: var(--muted);
+  font-size: 8px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.current-position-marker strong {
+  overflow: hidden;
+  font-family: var(--font-ibm-plex-mono), monospace;
+  font-size: 10px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.current-position-marker .button-base {
+  flex: 0 0 auto;
+}
+.critical-position-list {
+  display: grid;
+  gap: 8px;
+  margin-top: 10px;
+}
+.critical-position-card {
+  padding: 10px;
+  border: 1px solid #e2e4dc;
+  border-radius: 10px;
+  background: white;
+}
+.critical-position-title {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+.critical-position-title > button:first-child {
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+.critical-position-title span,
+.critical-position-title strong {
+  display: block;
+}
+.critical-position-title span {
+  color: var(--forest-2);
+  font-size: 8px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.critical-position-title strong {
+  margin-top: 2px;
+  font-family: var(--font-ibm-plex-mono), monospace;
+  font-size: 10px;
+}
+.remove-critical-position {
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  padding: 0;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+.remove-critical-position:hover {
+  background: #fae9e6;
+  color: var(--red);
+}
+.complete-review-button {
+  width: 100%;
+  margin-top: 14px;
+}
+.review-complete {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  margin-top: 14px;
+  padding: 13px;
+  border: 1px solid #cfe0cf;
+  border-radius: 12px;
+  background: #edf6ed;
+  color: #2e6d43;
+}
+.review-complete > svg {
+  flex: 0 0 auto;
+}
+.review-complete strong {
+  display: block;
+  font-size: 11px;
+}
+.review-complete p {
+  margin: 3px 0 0;
+  font-size: 9px;
+  line-height: 1.45;
 }
 
 .practice-panel {

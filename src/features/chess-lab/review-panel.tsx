@@ -5,21 +5,30 @@ import { Button } from "@/components/ui/button";
 import { jovaniStudy } from "@/content/jovani-study";
 import { cn } from "@/lib/utils";
 import type { MoveRecord } from "@/types/chess";
+import { ImportedGameReviewFlow, type ImportedGameReview } from "./imported-game-review";
 
 type ReviewPanelProps = {
   moves: MoveRecord[];
   currentPly: number;
+  currentPositionLabel: string;
   isOriginal: boolean;
+  canMarkPosition: boolean;
+  importedReview: ImportedGameReview;
   onSeek: (ply: number) => void;
   onPractice: (lessonIndex: number) => void;
+  onImportedReviewChange: (review: ImportedGameReview) => void;
 };
 
 export function ReviewPanel({
   moves,
   currentPly,
+  currentPositionLabel,
   isOriginal,
+  canMarkPosition,
+  importedReview,
   onSeek,
   onPractice,
+  onImportedReviewChange,
 }: ReviewPanelProps) {
   const rows = Array.from({ length: Math.ceil(moves.length / 2) }, (_, index) => ({
     white: moves[index * 2],
@@ -106,6 +115,17 @@ export function ReviewPanel({
             <Target size={16} /> Practice these positions
           </Button>
         </div>
+      )}
+
+      {!isOriginal && (
+        <ImportedGameReviewFlow
+          review={importedReview}
+          currentPly={currentPly}
+          currentPositionLabel={currentPositionLabel}
+          canMarkPosition={canMarkPosition}
+          onChange={onImportedReviewChange}
+          onSeek={onSeek}
+        />
       )}
     </>
   );

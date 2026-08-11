@@ -35,6 +35,7 @@ import type { CandidateMove, MoveRecord, ParsedGame, SubmittedAnswer } from "@/t
 import { ChessBoard } from "./chess-board";
 import { chessLabMachine } from "./chess-lab-machine";
 import { FailureSummary } from "./failure-summary";
+import { createEmptyImportedGameReview, type ImportedGameReview } from "./imported-game-review";
 import { PgnImportDialog } from "./pgn-import-dialog";
 import { PracticePanel } from "./practice-panel";
 import { ReviewPanel } from "./review-panel";
@@ -53,6 +54,9 @@ export function ChessLab() {
   const [isOriginal, setIsOriginal] = useState(true);
   const [flipped, setFlipped] = useState(false);
   const [showImport, setShowImport] = useState(false);
+  const [importedReview, setImportedReview] = useState<ImportedGameReview>(() =>
+    createEmptyImportedGameReview(),
+  );
   const [liveMessage, setLiveMessage] = useState("Bundled study loaded.");
 
   const inReview = state.matches("review") || state.matches("playing");
@@ -93,8 +97,10 @@ export function ChessLab() {
   const studyFacts = [
     { value: String(game.moves.length), label: "Playable ply" },
     {
-      value: isOriginal ? String(jovaniStudy.lessons.length) : "Legal",
-      label: isOriginal ? "Coached positions" : "Variation board",
+      value: isOriginal
+        ? String(jovaniStudy.lessons.length)
+        : String(importedReview.criticalPositions.length),
+      label: isOriginal ? "Coached positions" : "Critical positions",
     },
     { value: "Local", label: "Session-only data" },
   ];
@@ -102,6 +108,17 @@ export function ChessLab() {
   function enterExplore() {
     send({ type: "EXPLORE", fen: lineChess.fen() });
     setLiveMessage(`Exploring from ${currentMoveLabel}.`);
+  }
+
+  function seekReviewPosition(ply: number) {
+    send({ type: "REVIEW" });
+    send({ type: "SEEK", ply });
+    const move = ply > 0 ? game.moves[ply - 1] : undefined;
+    setLiveMessage(
+      ply === 0 || !move
+        ? "Returned to the starting position."
+        : `Returned to ${formatMoveLabel(ply - 1, move)}.`,
+    );
   }
 
   function handleBoardMove(from: Square, to: Square, promotion: PieceSymbol = "q") {
@@ -173,6 +190,7 @@ export function ChessLab() {
   function loadGame(importedGame: ParsedGame) {
     setGame(importedGame);
     setIsOriginal(false);
+    setImportedReview(createEmptyImportedGameReview());
     setShowImport(false);
     send({ type: "LOAD_GAME", maxPly: importedGame.moves.length });
     setLiveMessage(
@@ -183,6 +201,7 @@ export function ChessLab() {
   function resetOriginal() {
     setGame(originalGame);
     setIsOriginal(true);
+    setImportedReview(createEmptyImportedGameReview());
     setShowImport(false);
     send({ type: "LOAD_GAME", maxPly: originalGame.moves.length });
     setLiveMessage("Returned to the bundled Jovani study.");
@@ -229,7 +248,7 @@ export function ChessLab() {
           <p className="hero-copy">
             {isOriginal
               ? jovaniStudy.summary
-              : "Replay the imported line, inspect every position, and branch into legal variations without changing the original game."}
+              : "Capture your first impressions, replay legal positions, mark critical moments, and leave with one corrective drill."}
           </p>
         </div>
         <div className="result-card" aria-label={`Game result ${game.result}`}>
@@ -405,7 +424,10 @@ export function ChessLab() {
           )}
         </section>
 
-        <aside className="study-panel" aria-label="Study guidance">
+        <aside
+          className={cn("study-panel", !isOriginal && "imported-review-panel")}
+          aria-label="Study guidance"
+        >
           {inPractice && isOriginal ? (
             <PracticePanel
               key={currentLesson.id}
@@ -420,9 +442,13 @@ export function ChessLab() {
             <ReviewPanel
               moves={game.moves}
               currentPly={currentPly}
+              currentPositionLabel={currentMoveLabel}
               isOriginal={isOriginal}
-              onSeek={(ply) => send({ type: "SEEK", ply })}
+              canMarkPosition={inReview}
+              importedReview={importedReview}
+              onSeek={seekReviewPosition}
               onPractice={(lessonIndex) => send({ type: "PRACTICE", lessonIndex })}
+              onImportedReviewChange={setImportedReview}
             />
           )}
         </aside>
@@ -433,7 +459,8 @@ export function ChessLab() {
       <footer className="site-footer">
         <p>Jovani Chess Lab</p>
         <span>
-          Games and answers stay in this browser session. No account, upload, or engine service.
+          Games, answers, and review notes stay only in this open tab. No account, upload,
+          analytics, engine, or external service.
         </span>
       </footer>
 

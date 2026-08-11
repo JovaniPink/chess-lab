@@ -52,6 +52,78 @@ describe("ChessLab", () => {
     await user.click(screen.getByRole("button", { name: "Validate & load" }));
     await waitFor(() => expect(screen.getByText(/Ada vs. Grace/)).toBeVisible());
     expect(screen.getByRole("button", { name: "Find the move" })).toBeDisabled();
+    expect(screen.getByRole("heading", { name: "Remember first. Diagnose second." })).toBeVisible();
+  });
+
+  it("turns an imported game into one human-first session review", async () => {
+    const user = userEvent.setup();
+    render(<ChessLab />);
+    await user.click(screen.getByRole("button", { name: "Load PGN" }));
+    fireEvent.change(screen.getByLabelText("PGN notation"), {
+      target: {
+        value: `[White "Ada"]\n[Black "Grace"]\n[Result "1-0"]\n\n1. e4 e5 2. Qh5 Nc6 3. Bc4 Nf6 4. Qxf7# 1-0`,
+      },
+    });
+    await user.click(screen.getByRole("button", { name: "Validate & load" }));
+
+    const completeReview = screen.getByRole("button", { name: "Complete session review" });
+    expect(completeReview).toBeDisabled();
+    await user.type(
+      screen.getByRole("textbox", { name: "Immediate post-game thoughts" }),
+      "I felt uncertain after ...e5 and only calculated checks.",
+    );
+    await user.type(
+      screen.getByRole("textbox", { name: "Suspected first important mistake" }),
+      "I stopped checking Grace's threats.",
+    );
+
+    await user.click(screen.getByRole("button", { name: "Next move" }));
+    await user.click(screen.getByRole("button", { name: "Next move" }));
+    await user.click(screen.getByRole("button", { name: "Mark current position" }));
+    expect(screen.getByLabelText("Marked critical positions")).toHaveTextContent("1... e5");
+    await user.type(
+      screen.getByRole("textbox", { name: "Why was this position critical?" }),
+      "The position required a threat scan.",
+    );
+
+    await user.selectOptions(
+      screen.getByRole("combobox", { name: "Error category" }),
+      "Threat blindness",
+    );
+    await user.type(
+      screen.getByRole("textbox", { name: "Corrective drill" }),
+      "Replay this position and name every threat before choosing a move.",
+    );
+    expect(completeReview).toBeEnabled();
+    await user.click(completeReview);
+
+    expect(screen.getByText("Session review complete")).toBeVisible();
+    expect(screen.getByText(/Threat blindness → Replay this position/)).toBeVisible();
+    expect(screen.getByText("1", { selector: ".study-facts strong" })).toBeVisible();
+  });
+
+  it("returns a marked custom-FEN position to its legally reconstructed board", async () => {
+    const user = userEvent.setup();
+    render(<ChessLab />);
+    await user.click(screen.getByRole("button", { name: "Load PGN" }));
+    fireEvent.change(screen.getByLabelText("PGN notation"), {
+      target: {
+        value: `[SetUp "1"]\n[FEN "7k/P7/8/8/8/8/8/7K w - - 0 1"]\n[Result "*"]\n\n1. a8=Q+ *`,
+      },
+    });
+    await user.click(screen.getByRole("button", { name: "Validate & load" }));
+
+    expect(screen.getByRole("gridcell", { name: "a7, white pawn" })).toBeVisible();
+    await user.click(screen.getByRole("button", { name: "Next move" }));
+    expect(screen.getByRole("gridcell", { name: "a8, white queen" })).toBeVisible();
+    await user.click(screen.getByRole("button", { name: "Mark current position" }));
+
+    await user.click(screen.getByRole("button", { name: "Previous move" }));
+    expect(screen.getByRole("gridcell", { name: "a7, white pawn" })).toBeVisible();
+    await user.click(screen.getByRole("button", { name: "Return to 1. a8=Q+" }));
+
+    expect(screen.getByRole("slider", { name: "Game move" })).toHaveValue("1");
+    expect(screen.getByRole("gridcell", { name: "a8, white queen" })).toBeVisible();
   });
 
   it("closes the PGN dialog when its native cancel event fires", async () => {

@@ -61,7 +61,8 @@ export function PgnImportDialog({ open, defaultPgn, onClose, onLoad }: PgnImport
       <h2 id="pgn-dialog-title">Load a PGN to replay</h2>
       <p id="pgn-dialog-description">
         Player names, result, and moves are validated before the game reaches the board. Imported
-        games stay in this browser session and support replay and free exploration.
+        games stay only in this open tab and support legal replay, human-first review, and free
+        exploration.
       </p>
       <form onSubmit={form.handleSubmit(submit)}>
         <label htmlFor="pgn-input">PGN notation</label>
