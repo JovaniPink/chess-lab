@@ -81,9 +81,16 @@ Or run checks independently:
 npm run lint
 npm run typecheck
 npm run test
+npm run audit:production
 npm run build
 npm run test:artifact
 ```
+
+`npm run test-all` includes the production dependency audit and fails on high-severity findings in
+the shipped application graph. The full development-tool audit is intentionally monitored in
+[issue #4](https://github.com/JovaniPink/chess-lab/issues/4): current Vinext and Netlify releases
+still select vulnerable image-processing packages. Do not use `npm audit fix --force`, downgrade
+the runtime toolchain, or add transitive overrides merely to make that separate audit green.
 
 ## Netlify
 
