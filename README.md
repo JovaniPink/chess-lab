@@ -91,6 +91,9 @@ the shipped application graph. The full development-tool audit is intentionally 
 [issue #4](https://github.com/JovaniPink/chess-lab/issues/4): current Vinext and Netlify releases
 still select vulnerable image-processing packages. Do not use `npm audit fix --force`, downgrade
 the runtime toolchain, or add transitive overrides merely to make that separate audit green.
+Supported semver-compatible lockfile refreshes may reduce that tooling-only surface, but they must
+still pass the production audit, Vinext/Nitro build, and packaged Netlify runtime tests; keep the
+issue open until the complete development-tool audit is clean on a supported release graph.
 
 ## Netlify
 
