@@ -82,18 +82,20 @@ npm run lint
 npm run typecheck
 npm run test
 npm run audit:production
+npm run security:transitive-guards
 npm run build
 npm run test:artifact
 ```
 
 `npm run test-all` includes the production dependency audit and fails on high-severity findings in
-the shipped application graph. The full development-tool audit is intentionally monitored in
-[issue #4](https://github.com/JovaniPink/chess-lab/issues/4): current Vinext and Netlify releases
-still select vulnerable image-processing packages. Do not use `npm audit fix --force`, downgrade
-the runtime toolchain, or add transitive overrides merely to make that separate audit green.
-Supported semver-compatible lockfile refreshes may reduce that tooling-only surface, but they must
-still pass the production audit, Vinext/Nitro build, and packaged Netlify runtime tests; keep the
-issue open until the complete development-tool audit is clean on a supported release graph.
+the shipped application graph. The transitive guard also keeps the documented Netlify exceptions
+out of production and rejects Sharp versions older than 0.35.0. The full development-tool audit is
+intentionally monitored in [issue #4](https://github.com/JovaniPink/chess-lab/issues/4): Netlify's
+current supported release still selects two vulnerable packages with no fixed release. Do not use
+`npm audit fix --force` or downgrade the runtime toolchain merely to make that separate audit green.
+The narrow Sharp override, remaining paths, review deadline, and removal criteria are documented in
+[docs/dependency-security.md](docs/dependency-security.md). Every toolchain override must pass the
+production audit, Vinext/Nitro build, and packaged Netlify runtime tests.
 
 ## Netlify
 
