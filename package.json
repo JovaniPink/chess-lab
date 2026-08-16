@@ -17,7 +17,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:artifact": "node --test tests/netlify-artifact.test.mjs",
-    "test-all": "npm run lint && npm run typecheck && npm run test && npm run audit:production && npm run build && npm run test:artifact",
+    "test-all": "npm run lint && npm run typecheck && npm run test && npm run audit:production && npm run security:transitive-guards && npm run build && npm run test:artifact",
+    "security:transitive-guards": "node scripts/verify-development-only-dependencies.mjs",
     "validate:artifact": "node scripts/validate-artifact.mjs",
     "audit:production": "npm audit --omit=dev --audit-level=high",
     "lint": "eslint . --ignore-pattern dist --ignore-pattern .next",
@@ -62,9 +63,12 @@
     "react-server-dom-webpack": "19.2.8",
     "tailwindcss": "4.3.3",
     "typescript": "5.9.3",
-    "vinext": "0.0.50",
+    "vinext": "1.0.0-beta.6",
     "vite": "8.2.1",
     "vitest": "^4.1.10"
+  },
+  "overrides": {
+    "sharp": "0.35.3"
   },
   "type": "module",
   "displayName": "Jovani Chess Lab"
