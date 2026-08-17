@@ -40,3 +40,13 @@ Before finishing a change, run `npm run test-all`. It includes the production de
 The full development-tool audit is tracked separately because Vinext and Netlify currently own its
 unpatched image-processing graph; do not suppress those findings or force unsupported transitive
 overrides.
+
+## Framework and publication safety
+
+- Read the version-matched Next.js guides in `node_modules/next/dist/docs/` before changing App
+  Router contracts, then verify the behavior against Vinext, Nitro, and the artifact tests because
+  this repository does not run the stock Next.js server.
+- Inspect the staged diff and every commit being pushed. Do not publish credentials, private data,
+  unapproved source artifacts, or private workstation and user identifiers.
+- Use synthetic fixtures for public examples. Automated secret scanning is a backstop, not proof;
+  rotate or revoke an exposed credential before attempting history cleanup.
