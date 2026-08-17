@@ -12,6 +12,8 @@ The app reconstructs the complete game, explains the decision chain behind the l
 - PGN importing with player, result, and move validation
 - Human-first imported-game review with memory capture, critical-position markers, one primary
   error category, and one corrective drill
+- Editable 12-week training plan with workbook-based phases, weekly activity targets,
+  decision-quality signals, and human reflection prompts
 - Board orientation controls, keyboard navigation, live status feedback, and reduced-motion support
 - Responsive layouts for desktop, tablet, and mobile
 
@@ -35,6 +37,17 @@ The imported PGN, notes, markers, classification, and drill live only in React s
 tab. They reset when another PGN is loaded or the bundled lesson is restored, and disappear on
 reload or tab close. Do not add browser storage, uploads, accounts, analytics, engines, or another
 external service without a separate product and privacy decision.
+
+## Training-plan contract
+
+The 12-week plan translates the systematic training workbook into a human-first weekly view. The
+workbook's activity targets are editable starting points, while the phase commitments, leading
+decision-quality signals, and end-of-week prompts keep the plan grounded in the player's own games
+and observations rather than a rating promise.
+
+The complete plan lives in React memory for the open tab. It remains available while switching
+between study modes, but a reload or closed tab starts a fresh plan. It does not use browser
+storage, uploads, accounts, analytics, engines, or external services.
 
 ## Technology
 

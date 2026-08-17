@@ -949,6 +949,426 @@ input[type="range"] {
   line-height: 1.45;
 }
 
+.training-plan {
+  max-width: 1500px;
+  margin: 0 auto;
+  padding: 0 clamp(20px, 4vw, 64px);
+}
+.training-plan-header,
+.training-week-header,
+.plan-section-heading,
+.plan-card-title,
+.session-boundary,
+.week-navigation {
+  display: flex;
+}
+.training-plan-header {
+  align-items: center;
+  justify-content: space-between;
+  gap: 28px;
+  padding: clamp(22px, 3vw, 34px);
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  background:
+    radial-gradient(circle at 100% 0%, rgba(223, 240, 109, 0.18), transparent 35%), var(--panel);
+  box-shadow: 0 16px 46px rgba(25, 45, 38, 0.065);
+}
+.training-plan-heading {
+  display: flex;
+  align-items: flex-start;
+  gap: 15px;
+}
+.training-plan-icon {
+  width: 44px;
+  height: 44px;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  border-radius: 13px;
+  background: var(--forest);
+  color: var(--lime);
+}
+.training-plan-heading h2,
+.cycle-compass h3,
+.training-week h3 {
+  font-family: var(--font-fraunces), Georgia, serif;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+}
+.training-plan-heading h2 {
+  margin: 5px 0 6px;
+  font-size: clamp(25px, 2.5vw, 34px);
+}
+.training-plan-heading > div:last-child > p:last-child,
+.training-week-header > div:first-child > p:last-child {
+  max-width: 700px;
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.55;
+}
+.session-boundary {
+  max-width: 280px;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 13px 14px;
+  border: 1px solid #cedcd3;
+  border-radius: 13px;
+  background: rgba(237, 246, 237, 0.82);
+  color: #2e6d43;
+}
+.session-boundary > svg {
+  flex: 0 0 auto;
+}
+.session-boundary strong,
+.session-boundary span {
+  display: block;
+}
+.session-boundary strong {
+  margin-bottom: 3px;
+  font-size: 10px;
+}
+.session-boundary span {
+  font-size: 9px;
+  line-height: 1.45;
+}
+
+.cycle-compass,
+.training-week {
+  margin-top: 18px;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: var(--panel);
+  box-shadow: 0 12px 36px rgba(25, 45, 38, 0.05);
+}
+.cycle-compass {
+  padding: clamp(20px, 2.5vw, 30px);
+}
+.plan-section-heading {
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 20px;
+}
+.plan-section-heading h3 {
+  margin: 5px 0 0;
+  font-size: 22px;
+}
+.plan-section-heading > span {
+  padding: 6px 9px;
+  border-radius: 999px;
+  background: #eef1e8;
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+.objective-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+.objective-grid .plan-field:nth-child(2) {
+  grid-column: 1 / -1;
+}
+.plan-field label,
+.plan-card > label,
+.metric-field label {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--ink);
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+}
+.plan-field input,
+.plan-field textarea,
+.plan-card > input,
+.plan-card > textarea,
+.activity-row input,
+.metric-field input {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  outline: none;
+  background: white;
+  color: var(--ink);
+  font-size: 11px;
+  line-height: 1.45;
+}
+.plan-field input,
+.plan-card > input,
+.activity-row input,
+.metric-field input {
+  min-height: 38px;
+  padding: 9px 10px;
+}
+.plan-field textarea,
+.plan-card > textarea {
+  padding: 10px;
+  resize: vertical;
+}
+.plan-field input:focus,
+.plan-field textarea:focus,
+.plan-card > input:focus,
+.plan-card > textarea:focus,
+.activity-row input:focus,
+.metric-field input:focus {
+  border-color: var(--forest-2);
+  box-shadow: 0 0 0 3px rgba(36, 93, 78, 0.1);
+}
+.plan-field input::placeholder,
+.plan-field textarea::placeholder,
+.plan-card > textarea::placeholder,
+.metric-field input::placeholder {
+  color: #97a29d;
+}
+
+.plan-progress {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-top: 18px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  overflow: hidden;
+  background: rgba(255, 254, 250, 0.72);
+}
+.plan-progress > div {
+  padding: 13px 16px;
+  border-right: 1px solid var(--line);
+}
+.plan-progress > div:last-child {
+  border-right: 0;
+}
+.plan-progress span,
+.plan-progress strong {
+  display: block;
+}
+.plan-progress span {
+  margin-bottom: 3px;
+  color: var(--muted);
+  font-size: 8px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+}
+.plan-progress strong {
+  color: var(--forest);
+  font-family: var(--font-ibm-plex-mono), monospace;
+  font-size: 10px;
+}
+
+.week-picker {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(54px, 1fr));
+  gap: 6px;
+  margin-top: 12px;
+}
+.week-picker button {
+  min-height: 52px;
+  padding: 7px;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  background: rgba(255, 254, 250, 0.68);
+  color: var(--muted);
+  cursor: pointer;
+}
+.week-picker button:hover {
+  border-color: #bac7bd;
+  background: white;
+}
+.week-picker button.active {
+  border-color: var(--forest);
+  background: var(--forest);
+  color: white;
+  box-shadow: 0 6px 16px rgba(23, 63, 53, 0.18);
+}
+.week-picker button.started:not(.active) {
+  border-color: #b8cfbd;
+  background: #f0f6ed;
+  color: #2e6d43;
+}
+.week-picker span,
+.week-picker small {
+  display: block;
+}
+.week-picker span {
+  font-family: var(--font-fraunces), Georgia, serif;
+  font-size: 18px;
+  line-height: 1;
+}
+.week-picker small {
+  margin-top: 5px;
+  font-family: var(--font-ibm-plex-mono), monospace;
+  font-size: 8px;
+}
+.week-picker svg {
+  margin: 5px auto 0;
+}
+
+.training-week {
+  padding: clamp(20px, 3vw, 34px);
+}
+.training-week-header {
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  padding-bottom: 22px;
+  border-bottom: 1px solid var(--line);
+}
+.training-week-header h3 {
+  margin: 5px 0 6px;
+  font-size: 28px;
+}
+.week-navigation {
+  flex: 0 0 auto;
+  gap: 4px;
+}
+.training-week-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 18px;
+}
+.plan-card,
+.decision-quality,
+.weekly-reflection {
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 15px;
+  background: #fafaf6;
+}
+.plan-card-title {
+  align-items: flex-start;
+  gap: 9px;
+  margin-bottom: 16px;
+}
+.plan-card-title > svg {
+  flex: 0 0 auto;
+  margin-top: 1px;
+  color: var(--forest-2);
+}
+.plan-card-title h4 {
+  margin: 0;
+  font-size: 12px;
+}
+.plan-card-title p {
+  margin: 3px 0 0;
+  color: var(--muted);
+  font-size: 9px;
+  line-height: 1.45;
+}
+.commitment-list {
+  display: grid;
+  gap: 8px;
+  margin-top: 14px;
+}
+.commitment-list label {
+  position: relative;
+  display: grid;
+  grid-template-columns: 22px 1fr;
+  align-items: start;
+  gap: 9px;
+  padding: 10px;
+  border: 1px solid #e2e4dc;
+  border-radius: 10px;
+  background: white;
+  cursor: pointer;
+  font-size: 10px;
+  line-height: 1.45;
+}
+.commitment-list label.complete {
+  border-color: #cfe0cf;
+  background: #edf6ed;
+  color: #2e6d43;
+}
+.commitment-list input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+.commitment-list label > span {
+  width: 19px;
+  height: 19px;
+  display: grid;
+  place-items: center;
+  border: 1px solid #bbc3bd;
+  border-radius: 6px;
+  background: white;
+  color: white;
+}
+.commitment-list label.complete > span {
+  border-color: var(--forest);
+  background: var(--forest);
+}
+.commitment-list input:focus-visible + span {
+  outline: 3px solid color-mix(in srgb, var(--forest-2) 72%, white);
+  outline-offset: 3px;
+}
+
+.activity-table {
+  margin-bottom: 16px;
+}
+.activity-table-heading,
+.activity-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 58px 58px;
+  align-items: center;
+  gap: 8px;
+}
+.activity-table-heading {
+  padding: 0 2px 6px;
+  color: var(--muted);
+  font-size: 8px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.activity-table-heading span:not(:first-child) {
+  text-align: center;
+}
+.activity-row {
+  min-height: 45px;
+  padding: 6px 2px;
+  border-top: 1px solid #e4e5de;
+}
+.activity-row > span {
+  font-size: 10px;
+}
+.activity-row input {
+  min-width: 0;
+  padding-inline: 6px;
+  text-align: center;
+}
+
+.decision-quality,
+.weekly-reflection {
+  margin-top: 16px;
+}
+.metric-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+.metric-field {
+  padding: 11px;
+  border: 1px solid #e2e4dc;
+  border-radius: 11px;
+  background: white;
+}
+.metric-field input {
+  font-family: var(--font-ibm-plex-mono), monospace;
+  font-size: 13px;
+}
+.reflection-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.reflection-grid .plan-field:last-child {
+  grid-column: 1 / -1;
+}
+
 .practice-panel {
   min-height: 650px;
   display: flex;
@@ -1449,6 +1869,12 @@ input[type="range"] {
   .failure-grid {
     grid-template-columns: repeat(2, 1fr);
   }
+  .training-plan {
+    padding: 0 20px;
+  }
+  .week-picker {
+    grid-template-columns: repeat(6, minmax(54px, 1fr));
+  }
 }
 
 @media (max-width: 820px) {
@@ -1489,6 +1915,19 @@ input[type="range"] {
   }
   .next-session > svg {
     display: none;
+  }
+  .training-plan-header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .session-boundary {
+    max-width: none;
+  }
+  .training-week-grid {
+    grid-template-columns: 1fr;
+  }
+  .metric-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
@@ -1575,6 +2014,50 @@ input[type="range"] {
   }
   .site-footer span {
     text-align: left;
+  }
+  .training-plan {
+    padding: 0 12px;
+  }
+  .training-plan-header,
+  .cycle-compass,
+  .training-week {
+    border-radius: 14px;
+  }
+  .training-plan-heading {
+    gap: 11px;
+  }
+  .training-plan-icon {
+    width: 38px;
+    height: 38px;
+  }
+  .objective-grid,
+  .reflection-grid,
+  .metric-grid {
+    grid-template-columns: 1fr;
+  }
+  .objective-grid .plan-field:nth-child(2),
+  .reflection-grid .plan-field:last-child {
+    grid-column: auto;
+  }
+  .plan-progress {
+    grid-template-columns: 1fr;
+  }
+  .plan-progress > div {
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .plan-progress > div:last-child {
+    border-bottom: 0;
+  }
+  .week-picker {
+    grid-template-columns: repeat(4, minmax(54px, 1fr));
+  }
+  .training-week-header h3 {
+    font-size: 24px;
+  }
+  .activity-table-heading,
+  .activity-row {
+    grid-template-columns: minmax(0, 1fr) 52px 52px;
   }
 }
 

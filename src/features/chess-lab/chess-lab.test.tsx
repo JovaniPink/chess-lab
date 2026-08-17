@@ -32,6 +32,30 @@ describe("ChessLab", () => {
     expect(screen.getByText("The first concrete oversight")).toBeVisible();
   });
 
+  it("keeps the twelve-week plan editable while switching study views", async () => {
+    const user = userEvent.setup();
+    render(<ChessLab />);
+
+    await user.click(screen.getByRole("button", { name: "12-week plan" }));
+    expect(screen.getByRole("heading", { name: "Your 12-week training cycle" })).toBeVisible();
+    expect(screen.getByText("Open-tab plan")).toBeVisible();
+    await user.type(
+      screen.getByRole("textbox", { name: "Most important habit to build" }),
+      "Threat scan after every opponent move.",
+    );
+    await user.click(screen.getByRole("button", { name: /^Week 3,/ }));
+    expect(screen.getByRole("heading", { name: "Tactical foundations" })).toBeVisible();
+
+    await user.click(screen.getByRole("button", { name: "Review" }));
+    expect(screen.getByRole("slider", { name: "Game move" })).toBeVisible();
+    await user.click(screen.getByRole("button", { name: "12-week plan" }));
+
+    expect(screen.getByText("Week 3 of 12")).toBeVisible();
+    expect(screen.getByRole("textbox", { name: "Most important habit to build" })).toHaveValue(
+      "Threat scan after every opponent move.",
+    );
+  });
+
   it("rejects malformed PGN and loads valid PGN headers", async () => {
     const user = userEvent.setup();
     render(<ChessLab />);
