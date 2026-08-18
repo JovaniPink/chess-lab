@@ -6,6 +6,7 @@ import {
   ArrowLeft,
   ArrowRight,
   BrainCircuit,
+  CalendarRange,
   Flag,
   FlipHorizontal2,
   GraduationCap,
@@ -39,6 +40,7 @@ import { createEmptyImportedGameReview, type ImportedGameReview } from "./import
 import { PgnImportDialog } from "./pgn-import-dialog";
 import { PracticePanel } from "./practice-panel";
 import { ReviewPanel } from "./review-panel";
+import { createTrainingPlan, type TrainingPlan, TrainingPlanView } from "./training-plan";
 
 const originalGame = parsePgn(jovaniStudy.pgn);
 
@@ -54,6 +56,9 @@ export function ChessLab() {
   const [isOriginal, setIsOriginal] = useState(true);
   const [flipped, setFlipped] = useState(false);
   const [showImport, setShowImport] = useState(false);
+  const [activeView, setActiveView] = useState<"board" | "training-plan">("board");
+  const [selectedTrainingWeek, setSelectedTrainingWeek] = useState(1);
+  const [trainingPlan, setTrainingPlan] = useState<TrainingPlan>(() => createTrainingPlan());
   const [importedReview, setImportedReview] = useState<ImportedGameReview>(() =>
     createEmptyImportedGameReview(),
   );
@@ -62,6 +67,7 @@ export function ChessLab() {
   const inReview = state.matches("review") || state.matches("playing");
   const inPractice = state.matches("practice") || state.matches("feedback");
   const inExplore = state.matches("explore");
+  const inTrainingPlan = activeView === "training-plan";
   const currentPly = Math.min(state.context.currentPly, game.moves.length);
   const currentLesson = jovaniStudy.lessons[state.context.lessonIndex];
   const lineChess = useMemo(() => chessAtPly(game, currentPly), [currentPly, game]);
@@ -94,18 +100,25 @@ export function ChessLab() {
   const bottomColor: Color = flipped ? "b" : "w";
   const winnerColor: Color | null =
     game.result === "1-0" ? "w" : game.result === "0-1" ? "b" : null;
-  const studyFacts = [
-    { value: String(game.moves.length), label: "Playable ply" },
-    {
-      value: isOriginal
-        ? String(jovaniStudy.lessons.length)
-        : String(importedReview.criticalPositions.length),
-      label: isOriginal ? "Coached positions" : "Critical positions",
-    },
-    { value: "Local", label: "Session-only data" },
-  ];
+  const studyFacts = inTrainingPlan
+    ? [
+        { value: "12", label: "Training weeks" },
+        { value: `Week ${selectedTrainingWeek}`, label: "Selected focus" },
+        { value: "Open tab", label: "Session-only plan" },
+      ]
+    : [
+        { value: String(game.moves.length), label: "Playable ply" },
+        {
+          value: isOriginal
+            ? String(jovaniStudy.lessons.length)
+            : String(importedReview.criticalPositions.length),
+          label: isOriginal ? "Coached positions" : "Critical positions",
+        },
+        { value: "Local", label: "Session-only data" },
+      ];
 
   function enterExplore() {
+    setActiveView("board");
     send({ type: "EXPLORE", fen: lineChess.fen() });
     setLiveMessage(`Exploring from ${currentMoveLabel}.`);
   }
@@ -191,6 +204,7 @@ export function ChessLab() {
     setGame(importedGame);
     setIsOriginal(false);
     setImportedReview(createEmptyImportedGameReview());
+    setActiveView("board");
     setShowImport(false);
     send({ type: "LOAD_GAME", maxPly: importedGame.moves.length });
     setLiveMessage(
@@ -202,6 +216,7 @@ export function ChessLab() {
     setGame(originalGame);
     setIsOriginal(true);
     setImportedReview(createEmptyImportedGameReview());
+    setActiveView("board");
     setShowImport(false);
     send({ type: "LOAD_GAME", maxPly: originalGame.moves.length });
     setLiveMessage("Returned to the bundled Jovani study.");
@@ -240,24 +255,38 @@ export function ChessLab() {
       <section className="hero-strip" aria-labelledby="page-title">
         <div>
           <p className="eyebrow">
-            <GraduationCap size={15} /> {game.white} vs. {game.black} · {game.result}
+            <GraduationCap size={15} />
+            {inTrainingPlan
+              ? "Human-first · 12-week cycle"
+              : `${game.white} vs. ${game.black} · ${game.result}`}
           </p>
           <h1 id="page-title">
-            {isOriginal ? jovaniStudy.headline : "Read the game one decision at a time."}
+            {inTrainingPlan
+              ? "Train the decisions, not just the result."
+              : isOriginal
+                ? jovaniStudy.headline
+                : "Read the game one decision at a time."}
           </h1>
           <p className="hero-copy">
-            {isOriginal
-              ? jovaniStudy.summary
-              : "Capture your first impressions, replay legal positions, mark critical moments, and leave with one corrective drill."}
+            {inTrainingPlan
+              ? "Shape a sustainable plan around serious games, honest analysis, deliberate practice, and the evidence you notice each week."
+              : isOriginal
+                ? jovaniStudy.summary
+                : "Capture your first impressions, replay legal positions, mark critical moments, and leave with one corrective drill."}
           </p>
         </div>
-        <div className="result-card" aria-label={`Game result ${game.result}`}>
-          <span>Result</span>
-          <strong>{game.result}</strong>
+        <div
+          className="result-card"
+          aria-label={inTrainingPlan ? "Twelve-week training cycle" : `Game result ${game.result}`}
+        >
+          <span>{inTrainingPlan ? "Cycle" : "Result"}</span>
+          <strong>{inTrainingPlan ? "12" : game.result}</strong>
           <p>
-            {game.isCheckmate
-              ? `Checkmate in ${Math.ceil(game.moves.length / 2)}`
-              : `${game.moves.length} ply`}
+            {inTrainingPlan
+              ? "weeks"
+              : game.isCheckmate
+                ? `Checkmate in ${Math.ceil(game.moves.length / 2)}`
+                : `${game.moves.length} ply`}
           </p>
         </div>
       </section>
@@ -274,187 +303,218 @@ export function ChessLab() {
       <nav className="mode-tabs" aria-label="Study modes">
         <button
           type="button"
-          className={cn(inReview && "active")}
-          onClick={() => send({ type: "REVIEW" })}
-          aria-current={inReview ? "page" : undefined}
+          className={cn(!inTrainingPlan && inReview && "active")}
+          onClick={() => {
+            setActiveView("board");
+            send({ type: "REVIEW" });
+          }}
+          aria-current={!inTrainingPlan && inReview ? "page" : undefined}
         >
           <History size={17} /> Review
         </button>
         <button
           type="button"
-          className={cn(inPractice && "active")}
-          onClick={() => isOriginal && send({ type: "PRACTICE", lessonIndex: 0 })}
+          className={cn(!inTrainingPlan && inPractice && "active")}
+          onClick={() => {
+            if (!isOriginal) return;
+            setActiveView("board");
+            send({ type: "PRACTICE", lessonIndex: 0 });
+          }}
           disabled={!isOriginal}
-          aria-current={inPractice ? "page" : undefined}
+          aria-current={!inTrainingPlan && inPractice ? "page" : undefined}
         >
           <Target size={17} /> Find the move
         </button>
         <button
           type="button"
-          className={cn(inExplore && "active")}
+          className={cn(!inTrainingPlan && inExplore && "active")}
           onClick={enterExplore}
-          aria-current={inExplore ? "page" : undefined}
+          aria-current={!inTrainingPlan && inExplore ? "page" : undefined}
         >
           <Swords size={17} /> Explore variations
         </button>
+        <button
+          type="button"
+          className={cn(inTrainingPlan && "active")}
+          onClick={() => {
+            if (state.matches("playing")) send({ type: "PAUSE" });
+            setActiveView("training-plan");
+            setLiveMessage(`Training plan opened to week ${selectedTrainingWeek}.`);
+          }}
+          aria-current={inTrainingPlan ? "page" : undefined}
+        >
+          <CalendarRange size={17} /> 12-week plan
+        </button>
       </nav>
 
-      <div id="study-workspace" className="workspace-grid">
-        <section className="board-column" aria-label="Chess board workspace">
-          <PlayerRow
-            color={topColor}
-            game={game}
-            toMove={boardChess.turn() === topColor}
-            winner={winnerColor === topColor}
-            opponent
-          />
+      {inTrainingPlan ? (
+        <TrainingPlanView
+          plan={trainingPlan}
+          selectedWeek={selectedTrainingWeek}
+          onChange={setTrainingPlan}
+          onSelectWeek={(week) => {
+            setSelectedTrainingWeek(week);
+            setLiveMessage(`Training plan week ${week} selected.`);
+          }}
+        />
+      ) : (
+        <div id="study-workspace" className="workspace-grid">
+          <section className="board-column" aria-label="Chess board workspace">
+            <PlayerRow
+              color={topColor}
+              game={game}
+              toMove={boardChess.turn() === topColor}
+              winner={winnerColor === topColor}
+              opponent
+            />
 
-          <ChessBoard
-            key={`${positionLabel}-${flipped}`}
-            chess={boardChess}
-            flipped={flipped}
-            interactive={inExplore || state.matches("practice")}
-            lastMove={lastMove}
-            positionLabel={positionLabel}
-            onMove={handleBoardMove}
-          />
+            <ChessBoard
+              key={`${positionLabel}-${flipped}`}
+              chess={boardChess}
+              flipped={flipped}
+              interactive={inExplore || state.matches("practice")}
+              lastMove={lastMove}
+              positionLabel={positionLabel}
+              onMove={handleBoardMove}
+            />
 
-          <PlayerRow
-            color={bottomColor}
-            game={game}
-            toMove={boardChess.turn() === bottomColor}
-            winner={winnerColor === bottomColor}
-            action={
-              <Button
-                tone="ghost"
-                size="icon"
-                onClick={() => setFlipped((value) => !value)}
-                aria-label="Flip board"
-              >
-                <FlipHorizontal2 size={17} />
-              </Button>
-            }
-          />
+            <PlayerRow
+              color={bottomColor}
+              game={game}
+              toMove={boardChess.turn() === bottomColor}
+              winner={winnerColor === bottomColor}
+              action={
+                <Button
+                  tone="ghost"
+                  size="icon"
+                  onClick={() => setFlipped((value) => !value)}
+                  aria-label="Flip board"
+                >
+                  <FlipHorizontal2 size={17} />
+                </Button>
+              }
+            />
 
-          {inReview && (
-            <div className="playback-card">
-              <Button
-                tone="ghost"
-                size="icon"
-                onClick={() => send({ type: "PREV" })}
-                disabled={currentPly === 0}
-                aria-label="Previous move"
-              >
-                <ArrowLeft size={19} />
-              </Button>
-              <Button
-                tone="primary"
-                size="icon"
-                onClick={() => send({ type: state.matches("playing") ? "PAUSE" : "PLAY" })}
-                aria-label={state.matches("playing") ? "Pause replay" : "Play replay"}
-              >
-                {state.matches("playing") ? (
-                  <Pause size={18} />
-                ) : (
-                  <Play size={18} fill="currentColor" />
-                )}
-              </Button>
-              <Button
-                tone="ghost"
-                size="icon"
-                onClick={() => send({ type: "NEXT" })}
-                disabled={currentPly === game.moves.length}
-                aria-label="Next move"
-              >
-                <ArrowRight size={19} />
-              </Button>
-              <div className="scrubber-wrap">
-                <div className="scrubber-label">
-                  <strong>{currentMoveLabel}</strong>
-                  <span>
-                    {currentPly} / {game.moves.length} ply
-                  </span>
+            {inReview && (
+              <div className="playback-card">
+                <Button
+                  tone="ghost"
+                  size="icon"
+                  onClick={() => send({ type: "PREV" })}
+                  disabled={currentPly === 0}
+                  aria-label="Previous move"
+                >
+                  <ArrowLeft size={19} />
+                </Button>
+                <Button
+                  tone="primary"
+                  size="icon"
+                  onClick={() => send({ type: state.matches("playing") ? "PAUSE" : "PLAY" })}
+                  aria-label={state.matches("playing") ? "Pause replay" : "Play replay"}
+                >
+                  {state.matches("playing") ? (
+                    <Pause size={18} />
+                  ) : (
+                    <Play size={18} fill="currentColor" />
+                  )}
+                </Button>
+                <Button
+                  tone="ghost"
+                  size="icon"
+                  onClick={() => send({ type: "NEXT" })}
+                  disabled={currentPly === game.moves.length}
+                  aria-label="Next move"
+                >
+                  <ArrowRight size={19} />
+                </Button>
+                <div className="scrubber-wrap">
+                  <div className="scrubber-label">
+                    <strong>{currentMoveLabel}</strong>
+                    <span>
+                      {currentPly} / {game.moves.length} ply
+                    </span>
+                  </div>
+                  <input
+                    type="range"
+                    min="0"
+                    max={game.moves.length}
+                    value={currentPly}
+                    onChange={(event) => send({ type: "SEEK", ply: Number(event.target.value) })}
+                    aria-label="Game move"
+                  />
                 </div>
-                <input
-                  type="range"
-                  min="0"
-                  max={game.moves.length}
-                  value={currentPly}
-                  onChange={(event) => send({ type: "SEEK", ply: Number(event.target.value) })}
-                  aria-label="Game move"
-                />
               </div>
-            </div>
-          )}
+            )}
 
-          {inPractice && (
-            <div className="practice-bar">
-              <Target size={17} />
-              <span>
-                <strong>{state.matches("practice") ? "Your move" : "Answer reviewed"}</strong> ·
-                Position locked to lesson {state.context.lessonIndex + 1}
-              </span>
-            </div>
-          )}
-
-          {inExplore && (
-            <div className="explore-bar">
-              <div>
-                <Sparkles size={17} />
+            {inPractice && (
+              <div className="practice-bar">
+                <Target size={17} />
                 <span>
-                  <strong>Exploration board</strong> · make any legal move
+                  <strong>{state.matches("practice") ? "Your move" : "Answer reviewed"}</strong> ·
+                  Position locked to lesson {state.context.lessonIndex + 1}
                 </span>
               </div>
-              <div className="explore-moves" aria-label="Variation moves">
-                {state.context.branchMoves.length
-                  ? state.context.branchMoves.join("  ")
-                  : "No branch moves yet"}
+            )}
+
+            {inExplore && (
+              <div className="explore-bar">
+                <div>
+                  <Sparkles size={17} />
+                  <span>
+                    <strong>Exploration board</strong> · make any legal move
+                  </span>
+                </div>
+                <div className="explore-moves" aria-label="Variation moves">
+                  {state.context.branchMoves.length
+                    ? state.context.branchMoves.join("  ")
+                    : "No branch moves yet"}
+                </div>
+                <Button
+                  tone="secondary"
+                  size="sm"
+                  onClick={() => {
+                    send({ type: "RESET_BRANCH" });
+                    setLiveMessage("Variation reset to its starting position.");
+                  }}
+                >
+                  <RefreshCw size={15} /> Reset branch
+                </Button>
               </div>
-              <Button
-                tone="secondary"
-                size="sm"
-                onClick={() => {
-                  send({ type: "RESET_BRANCH" });
-                  setLiveMessage("Variation reset to its starting position.");
-                }}
-              >
-                <RefreshCw size={15} /> Reset branch
-              </Button>
-            </div>
-          )}
-        </section>
+            )}
+          </section>
 
-        <aside
-          className={cn("study-panel", !isOriginal && "imported-review-panel")}
-          aria-label="Study guidance"
-        >
-          {inPractice && isOriginal ? (
-            <PracticePanel
-              key={currentLesson.id}
-              lesson={currentLesson}
-              lessonIndex={state.context.lessonIndex}
-              lessonCount={jovaniStudy.lessons.length}
-              submittedAnswer={state.context.submittedAnswer}
-              onCandidate={submitCandidate}
-              onNext={() => send({ type: "NEXT_LESSON" })}
-            />
-          ) : (
-            <ReviewPanel
-              moves={game.moves}
-              currentPly={currentPly}
-              currentPositionLabel={currentMoveLabel}
-              isOriginal={isOriginal}
-              canMarkPosition={inReview}
-              importedReview={importedReview}
-              onSeek={seekReviewPosition}
-              onPractice={(lessonIndex) => send({ type: "PRACTICE", lessonIndex })}
-              onImportedReviewChange={setImportedReview}
-            />
-          )}
-        </aside>
-      </div>
+          <aside
+            className={cn("study-panel", !isOriginal && "imported-review-panel")}
+            aria-label="Study guidance"
+          >
+            {inPractice && isOriginal ? (
+              <PracticePanel
+                key={currentLesson.id}
+                lesson={currentLesson}
+                lessonIndex={state.context.lessonIndex}
+                lessonCount={jovaniStudy.lessons.length}
+                submittedAnswer={state.context.submittedAnswer}
+                onCandidate={submitCandidate}
+                onNext={() => send({ type: "NEXT_LESSON" })}
+              />
+            ) : (
+              <ReviewPanel
+                moves={game.moves}
+                currentPly={currentPly}
+                currentPositionLabel={currentMoveLabel}
+                isOriginal={isOriginal}
+                canMarkPosition={inReview}
+                importedReview={importedReview}
+                onSeek={seekReviewPosition}
+                onPractice={(lessonIndex) => send({ type: "PRACTICE", lessonIndex })}
+                onImportedReviewChange={setImportedReview}
+              />
+            )}
+          </aside>
+        </div>
+      )}
 
-      {isOriginal && <FailureSummary />}
+      {isOriginal && !inTrainingPlan && <FailureSummary />}
 
       <footer className="site-footer">
         <p>Jovani Chess Lab</p>
