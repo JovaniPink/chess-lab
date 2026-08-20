@@ -16,6 +16,7 @@ describe("TrainingPlanView", () => {
     });
     expect(plan.weeks[10].phase).toBe("Opening consolidation");
     expect(plan.weeks[11].phase).toBe("Audit and redesign");
+    expect(plan.weeks.every((week) => week.linkedReviews.length === 0)).toBe(true);
 
     plan.weeks[0].commitments[0].complete = true;
     expect(plan.weeks[1].commitments[0].complete).toBe(false);

@@ -923,7 +923,15 @@ input[type="range"] {
 }
 .complete-review-button {
   width: 100%;
+}
+.review-completion-action {
   margin-top: 14px;
+}
+.review-completion-action > p {
+  margin: 0 0 9px;
+  color: var(--muted);
+  font-size: 9px;
+  line-height: 1.5;
 }
 .review-complete {
   display: flex;
@@ -947,6 +955,9 @@ input[type="range"] {
   margin: 3px 0 0;
   font-size: 9px;
   line-height: 1.45;
+}
+.open-linked-week-button {
+  margin-top: 9px;
 }
 
 .training-plan {
@@ -1232,11 +1243,50 @@ input[type="range"] {
 }
 .plan-card,
 .decision-quality,
-.weekly-reflection {
+.weekly-reflection,
+.linked-review-section {
   padding: 18px;
   border: 1px solid var(--line);
   border-radius: 15px;
   background: #fafaf6;
+}
+.linked-review-section {
+  margin-top: 18px;
+  border-color: #cfe0cf;
+  background: #f2f7ef;
+}
+.linked-review-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+.linked-review-card {
+  padding: 12px;
+  border: 1px solid #d8e4d5;
+  border-radius: 11px;
+  background: white;
+}
+.linked-review-card span,
+.linked-review-card strong {
+  display: block;
+}
+.linked-review-card span {
+  color: var(--muted);
+  font-size: 8px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.linked-review-card strong {
+  margin-top: 5px;
+  color: var(--forest);
+  font-size: 11px;
+}
+.linked-review-card p {
+  margin: 5px 0 0;
+  color: var(--ink);
+  font-size: 10px;
+  line-height: 1.5;
 }
 .plan-card-title {
   align-items: flex-start;
@@ -2032,6 +2082,7 @@ input[type="range"] {
   }
   .objective-grid,
   .reflection-grid,
+  .linked-review-list,
   .metric-grid {
     grid-template-columns: 1fr;
   }

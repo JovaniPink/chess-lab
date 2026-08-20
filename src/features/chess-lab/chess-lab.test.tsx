@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 import { ChessLab } from "./chess-lab";
@@ -123,7 +123,77 @@ describe("ChessLab", () => {
 
     expect(screen.getByText("Session review complete")).toBeVisible();
     expect(screen.getByText(/Threat blindness → Replay this position/)).toBeVisible();
+    expect(screen.getByRole("button", { name: "Open linked Week 1" })).toBeVisible();
     expect(screen.getByText("1", { selector: ".study-facts strong" })).toBeVisible();
+  });
+
+  it("links a completed imported review to the selected week across mode switches", async () => {
+    const user = userEvent.setup();
+    render(<ChessLab />);
+
+    await user.click(screen.getByRole("button", { name: "12-week plan" }));
+    await user.click(screen.getByRole("button", { name: /^Week 3,/ }));
+    await user.type(
+      screen.getByRole("textbox", { name: "Training notes" }),
+      "Keep the fixed tactical set small enough to repeat.",
+    );
+
+    await user.click(screen.getByRole("button", { name: "Review" }));
+    await user.click(screen.getByRole("button", { name: "Load PGN" }));
+    fireEvent.change(screen.getByLabelText("PGN notation"), {
+      target: {
+        value: `[White "Ada"]\n[Black "Grace"]\n[Result "1-0"]\n\n1. e4 e5 2. Qh5 Nc6 3. Bc4 Nf6 4. Qxf7# 1-0`,
+      },
+    });
+    await user.click(screen.getByRole("button", { name: "Validate & load" }));
+
+    await user.type(
+      screen.getByRole("textbox", { name: "Immediate post-game thoughts" }),
+      "I chose the first forcing move without comparing candidates.",
+    );
+    await user.click(screen.getByRole("button", { name: "Next move" }));
+    await user.click(screen.getByRole("button", { name: "Mark current position" }));
+    await user.selectOptions(
+      screen.getByRole("combobox", { name: "Error category" }),
+      "Candidate-generation failure",
+    );
+    await user.type(
+      screen.getByRole("textbox", { name: "Corrective drill" }),
+      "Write three candidates before calculating ten tactical positions.",
+    );
+
+    await user.click(screen.getByRole("button", { name: "12-week plan" }));
+    expect(screen.getByText("Week 3 of 12")).toBeVisible();
+    expect(screen.getByRole("textbox", { name: "Training notes" })).toHaveValue(
+      "Keep the fixed tactical set small enough to repeat.",
+    );
+
+    await user.click(screen.getByRole("button", { name: "Review" }));
+    expect(screen.getByRole("textbox", { name: "Immediate post-game thoughts" })).toHaveValue(
+      "I chose the first forcing move without comparing candidates.",
+    );
+    expect(screen.getByRole("combobox", { name: "Error category" })).toHaveValue(
+      "Candidate-generation failure",
+    );
+    expect(screen.getByRole("button", { name: "Complete session review" })).toBeEnabled();
+    await user.click(screen.getByRole("button", { name: "Complete session review" }));
+
+    expect(screen.getByRole("button", { name: "Open linked Week 3" })).toBeVisible();
+    await user.click(screen.getByRole("button", { name: "Open linked Week 3" }));
+
+    const linkedReviews = screen.getByRole("region", { name: "Linked game reviews" });
+    expect(within(linkedReviews).getByText("Candidate-generation failure")).toBeVisible();
+    expect(
+      within(linkedReviews).getByText(
+        "Write three candidates before calculating ten tactical positions.",
+      ),
+    ).toBeVisible();
+    expect(screen.getByRole("textbox", { name: "Training notes" })).toHaveValue(
+      "Keep the fixed tactical set small enough to repeat.",
+    );
+
+    await user.click(screen.getByRole("button", { name: "Review" }));
+    expect(screen.getByText("Session review complete")).toBeVisible();
   });
 
   it("returns a marked custom-FEN position to its legally reconstructed board", async () => {
