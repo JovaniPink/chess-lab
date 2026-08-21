@@ -103,10 +103,11 @@ npm run test:artifact
 ```
 
 `npm run test-all` includes the production dependency audit and fails on high-severity findings in
-the shipped application graph. The transitive guard also keeps the documented Netlify exceptions
-out of production and rejects Sharp versions older than 0.35.0. The full development-tool audit is
-intentionally monitored in [issue #4](https://github.com/JovaniPink/chess-lab/issues/4): Netlify's
-current supported release still selects two vulnerable packages with no fixed release. Do not use
+the shipped application graph. The transitive guard keeps the documented Netlify exception out of
+production, rejects Sharp versions older than 0.35.0, and prevents the lockfile from reintroducing
+the removed `image-size` path. The full development-tool audit is intentionally monitored in
+[issue #4](https://github.com/JovaniPink/chess-lab/issues/4): Netlify's current supported release
+still selects vulnerable `extract-zip@2.0.1`, for which no fixed release exists. Do not use
 `npm audit fix --force` or downgrade the runtime toolchain merely to make that separate audit green.
 The narrow Sharp override, remaining paths, review deadline, and removal criteria are documented in
 [docs/dependency-security.md](docs/dependency-security.md). Every toolchain override must pass the

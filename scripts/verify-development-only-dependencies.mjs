@@ -1,4 +1,7 @@
 import { execFileSync } from "node:child_process";
+import { readFileSync } from "node:fs";
+
+const lock = JSON.parse(readFileSync(new URL("../package-lock.json", import.meta.url), "utf8"));
 
 const tree = JSON.parse(
   execFileSync("npm", ["ls", "--omit=dev", "--all", "--json"], {
@@ -9,10 +12,24 @@ const tree = JSON.parse(
 const forbiddenProductionPackages = new Set(["extract-zip", "image-size"]);
 const violations = [];
 
-function isFixedSharp(version) {
-  const [major = 0, minor = 0, patch = 0] = version.split("-")[0].split(".").map(Number);
+function parseVersion(version) {
+  return version.split("-")[0].split(".").map(Number);
+}
 
-  return major > 0 || (major === 0 && (minor > 35 || (minor === 35 && patch >= 0)));
+function isAtLeast(version, minimum) {
+  const current = parseVersion(version);
+  const expected = parseVersion(minimum);
+
+  for (let index = 0; index < Math.max(current.length, expected.length); index += 1) {
+    const difference = (current[index] ?? 0) - (expected[index] ?? 0);
+    if (difference !== 0) return difference > 0;
+  }
+
+  return true;
+}
+
+function isFixedSharp(version) {
+  return isAtLeast(version, "0.35.0");
 }
 
 function visit(dependencies = {}, path = []) {
@@ -33,15 +50,40 @@ function visit(dependencies = {}, path = []) {
 
 visit(tree.dependencies);
 
+const lockedPackages = lock.packages ?? {};
+const netlifyCliVersion = lockedPackages["node_modules/netlify-cli"]?.version ?? "0.0.0";
+const netlifyDevUtilsVersion =
+  lockedPackages["node_modules/@netlify/dev-utils"]?.version ?? "0.0.0";
+
+if (!isAtLeast(netlifyCliVersion, "27.1.2")) {
+  violations.push(`package-lock.json: netlify-cli@${netlifyCliVersion} is older than 27.1.2`);
+}
+
+if (!isAtLeast(netlifyDevUtilsVersion, "5.0.0")) {
+  violations.push(
+    `package-lock.json: root @netlify/dev-utils@${netlifyDevUtilsVersion} is older than 5.0.0`,
+  );
+}
+
+const imageSizePaths = Object.entries(lockedPackages)
+  .filter(
+    ([path]) => path === "node_modules/image-size" || path.endsWith("/node_modules/image-size"),
+  )
+  .map(([path, metadata]) => `${path}@${metadata.version ?? "unknown"}`);
+
+if (imageSizePaths.length > 0) {
+  violations.push(`package-lock.json reintroduced image-size: ${imageSizePaths.join(", ")}`);
+}
+
 if (violations.length > 0) {
   console.error(
-    `Development-only dependency exception leaked into production:\n${violations
+    `Dependency security contract failed:\n${violations
       .map((violation) => `- ${violation}`)
       .join("\n")}`,
   );
   process.exitCode = 1;
 } else {
   console.log(
-    "Verified: extract-zip and image-size are absent from production, and production Sharp is >=0.35.0.",
+    "Verified: extract-zip and image-size are absent from production; production Sharp is >=0.35.0; the Netlify lock uses dev-utils >=5.0.0 with no image-size path.",
   );
 }
