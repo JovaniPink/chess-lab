@@ -43,11 +43,13 @@ external service without a separate product and privacy decision.
 The 12-week plan translates the systematic training workbook into a human-first weekly view. The
 workbook's activity targets are editable starting points, while the phase commitments, leading
 decision-quality signals, and end-of-week prompts keep the plan grounded in the player's own games
-and observations rather than a rating promise.
+and observations rather than a rating promise. Completing an imported-game review links that
+review's error category and corrective drill to the selected week as a distinct evidence record;
+re-completing the same review updates or moves its stable link instead of duplicating it.
 
-The complete plan lives in React memory for the open tab. It remains available while switching
-between study modes, but a reload or closed tab starts a fresh plan. It does not use browser
-storage, uploads, accounts, analytics, engines, or external services.
+The complete plan and its linked reviews live in React memory for the open tab. They remain
+available while switching between study modes, but a reload or closed tab starts a fresh plan. They
+do not use browser storage, uploads, accounts, analytics, engines, or external services.
 
 ## Technology
 
