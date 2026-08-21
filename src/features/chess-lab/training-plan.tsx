@@ -6,6 +6,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Clock3,
+  Link2,
   ListChecks,
   NotebookPen,
   ShieldCheck,
@@ -13,6 +14,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import type { ErrorCategory } from "./imported-game-review";
 
 const activityBlueprints = [
   { id: "serious-games", label: "Serious games", target: "2" },
@@ -121,6 +123,12 @@ export type WeeklyReview = {
   nextAdjustment: string;
 };
 
+export type TrainingReviewLink = {
+  id: string;
+  errorCategory: ErrorCategory;
+  correctiveDrill: string;
+};
+
 export type TrainingWeek = {
   number: number;
   phase: string;
@@ -136,6 +144,7 @@ export type TrainingWeek = {
     endgamesExecuted: string;
   };
   review: WeeklyReview;
+  linkedReviews: TrainingReviewLink[];
 };
 
 export type TrainingPlan = {
@@ -183,6 +192,7 @@ export function createTrainingPlan(): TrainingPlan {
           improvementEvidence: "",
           nextAdjustment: "",
         },
+        linkedReviews: [],
       })),
     ),
   };
@@ -394,6 +404,30 @@ export function TrainingPlanView({
             </Button>
           </div>
         </header>
+
+        {week.linkedReviews.length > 0 && (
+          <section
+            className="linked-review-section"
+            aria-labelledby={`week-${week.number}-linked-reviews`}
+          >
+            <div className="plan-card-title">
+              <Link2 size={17} />
+              <div>
+                <h4 id={`week-${week.number}-linked-reviews`}>Linked game reviews</h4>
+                <p>Completed imported-game diagnoses and drills assigned to this training week.</p>
+              </div>
+            </div>
+            <div className="linked-review-list">
+              {week.linkedReviews.map((linkedReview, index) => (
+                <article className="linked-review-card" key={linkedReview.id}>
+                  <span>Imported review {index + 1}</span>
+                  <strong>{linkedReview.errorCategory}</strong>
+                  <p>{linkedReview.correctiveDrill}</p>
+                </article>
+              ))}
+            </div>
+          </section>
+        )}
 
         <div className="training-week-grid">
           <section className="plan-card" aria-labelledby="weekly-work-title">

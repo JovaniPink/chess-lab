@@ -20,6 +20,13 @@ const errorCategories = [
   "Physical distraction or fatigue",
 ] as const;
 
+export type ErrorCategory = (typeof errorCategories)[number];
+
+export type ImportedReviewTrainingLink = {
+  id: string;
+  weekNumber: number;
+};
+
 export type CriticalPosition = {
   ply: number;
   label: string;
@@ -30,9 +37,10 @@ export type ImportedGameReview = {
   postGameThoughts: string;
   suspectedMistake: string;
   criticalPositions: CriticalPosition[];
-  errorCategory: (typeof errorCategories)[number] | "";
+  errorCategory: ErrorCategory | "";
   correctiveDrill: string;
   completed: boolean;
+  trainingWeekLink: ImportedReviewTrainingLink | null;
 };
 
 export function createEmptyImportedGameReview(): ImportedGameReview {
@@ -43,6 +51,7 @@ export function createEmptyImportedGameReview(): ImportedGameReview {
     errorCategory: "",
     correctiveDrill: "",
     completed: false,
+    trainingWeekLink: null,
   };
 }
 
@@ -51,7 +60,10 @@ type ImportedGameReviewProps = {
   currentPly: number;
   currentPositionLabel: string;
   canMarkPosition: boolean;
+  selectedTrainingWeek: number;
   onChange: (review: ImportedGameReview) => void;
+  onComplete: (review: ImportedGameReview) => void;
+  onOpenTrainingWeek: (weekNumber: number) => void;
   onSeek: (ply: number) => void;
 };
 
@@ -60,7 +72,10 @@ export function ImportedGameReviewFlow({
   currentPly,
   currentPositionLabel,
   canMarkPosition,
+  selectedTrainingWeek,
   onChange,
+  onComplete,
+  onOpenTrainingWeek,
   onSeek,
 }: ImportedGameReviewProps) {
   const currentPositionIsMarked = review.criticalPositions.some(
@@ -275,17 +290,33 @@ export function ImportedGameReviewFlow({
             <p>
               {review.errorCategory} → {review.correctiveDrill}
             </p>
+            {review.trainingWeekLink && (
+              <Button
+                className="open-linked-week-button"
+                tone="secondary"
+                size="sm"
+                onClick={() => onOpenTrainingWeek(review.trainingWeekLink?.weekNumber ?? 1)}
+              >
+                Open linked Week {review.trainingWeekLink.weekNumber}
+              </Button>
+            )}
           </div>
         </div>
       ) : (
-        <Button
-          className="complete-review-button"
-          tone="primary"
-          disabled={!canComplete}
-          onClick={() => onChange({ ...review, completed: true })}
-        >
-          <Dumbbell size={16} /> Complete session review
-        </Button>
+        <div className="review-completion-action">
+          <p>
+            Completing this review links its error category and corrective drill to Week{" "}
+            {selectedTrainingWeek} of your open-tab plan.
+          </p>
+          <Button
+            className="complete-review-button"
+            tone="primary"
+            disabled={!canComplete}
+            onClick={() => onComplete(review)}
+          >
+            <Dumbbell size={16} /> Complete session review
+          </Button>
+        </div>
       )}
     </section>
   );

@@ -13,10 +13,13 @@ type ReviewPanelProps = {
   currentPositionLabel: string;
   isOriginal: boolean;
   canMarkPosition: boolean;
+  selectedTrainingWeek: number;
   importedReview: ImportedGameReview;
   onSeek: (ply: number) => void;
   onPractice: (lessonIndex: number) => void;
   onImportedReviewChange: (review: ImportedGameReview) => void;
+  onImportedReviewComplete: (review: ImportedGameReview) => void;
+  onOpenTrainingWeek: (weekNumber: number) => void;
 };
 
 export function ReviewPanel({
@@ -25,10 +28,13 @@ export function ReviewPanel({
   currentPositionLabel,
   isOriginal,
   canMarkPosition,
+  selectedTrainingWeek,
   importedReview,
   onSeek,
   onPractice,
   onImportedReviewChange,
+  onImportedReviewComplete,
+  onOpenTrainingWeek,
 }: ReviewPanelProps) {
   const rows = Array.from({ length: Math.ceil(moves.length / 2) }, (_, index) => ({
     white: moves[index * 2],
@@ -123,7 +129,10 @@ export function ReviewPanel({
           currentPly={currentPly}
           currentPositionLabel={currentPositionLabel}
           canMarkPosition={canMarkPosition}
+          selectedTrainingWeek={selectedTrainingWeek}
           onChange={onImportedReviewChange}
+          onComplete={onImportedReviewComplete}
+          onOpenTrainingWeek={onOpenTrainingWeek}
           onSeek={onSeek}
         />
       )}

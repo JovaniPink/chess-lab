@@ -20,7 +20,7 @@ import {
   Target,
   Upload,
 } from "lucide-react";
-import { type ReactNode, useMemo, useState } from "react";
+import { type ReactNode, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { jovaniStudy } from "@/content/jovani-study";
 import {
@@ -40,7 +40,12 @@ import { createEmptyImportedGameReview, type ImportedGameReview } from "./import
 import { PgnImportDialog } from "./pgn-import-dialog";
 import { PracticePanel } from "./practice-panel";
 import { ReviewPanel } from "./review-panel";
-import { createTrainingPlan, type TrainingPlan, TrainingPlanView } from "./training-plan";
+import {
+  createTrainingPlan,
+  type TrainingPlan,
+  type TrainingReviewLink,
+  TrainingPlanView,
+} from "./training-plan";
 
 const originalGame = parsePgn(jovaniStudy.pgn);
 
@@ -62,6 +67,7 @@ export function ChessLab() {
   const [importedReview, setImportedReview] = useState<ImportedGameReview>(() =>
     createEmptyImportedGameReview(),
   );
+  const nextImportedReviewLinkId = useRef(1);
   const [liveMessage, setLiveMessage] = useState("Bundled study loaded.");
 
   const inReview = state.matches("review") || state.matches("playing");
@@ -220,6 +226,43 @@ export function ChessLab() {
     setShowImport(false);
     send({ type: "LOAD_GAME", maxPly: originalGame.moves.length });
     setLiveMessage("Returned to the bundled Jovani study.");
+  }
+
+  function completeImportedReview(review: ImportedGameReview) {
+    if (!review.errorCategory || review.correctiveDrill.trim().length === 0) return;
+
+    const existingLinkId = review.trainingWeekLink?.id;
+    const linkId = existingLinkId ?? `imported-review-${nextImportedReviewLinkId.current++}`;
+    const linkedReview: TrainingReviewLink = {
+      id: linkId,
+      errorCategory: review.errorCategory,
+      correctiveDrill: review.correctiveDrill,
+    };
+
+    setTrainingPlan((currentPlan) => ({
+      ...currentPlan,
+      weeks: currentPlan.weeks.map((week) => {
+        const otherLinks = week.linkedReviews.filter((link) => link.id !== linkId);
+        return week.number === selectedTrainingWeek
+          ? { ...week, linkedReviews: [...otherLinks, linkedReview] }
+          : { ...week, linkedReviews: otherLinks };
+      }),
+    }));
+    setImportedReview({
+      ...review,
+      completed: true,
+      trainingWeekLink: { id: linkId, weekNumber: selectedTrainingWeek },
+    });
+    setLiveMessage(
+      `Session review completed and linked to training plan week ${selectedTrainingWeek}.`,
+    );
+  }
+
+  function openTrainingWeek(weekNumber: number) {
+    if (state.matches("playing")) send({ type: "PAUSE" });
+    setSelectedTrainingWeek(weekNumber);
+    setActiveView("training-plan");
+    setLiveMessage(`Training plan opened to linked week ${weekNumber}.`);
   }
 
   return (
@@ -504,10 +547,13 @@ export function ChessLab() {
                 currentPositionLabel={currentMoveLabel}
                 isOriginal={isOriginal}
                 canMarkPosition={inReview}
+                selectedTrainingWeek={selectedTrainingWeek}
                 importedReview={importedReview}
                 onSeek={seekReviewPosition}
                 onPractice={(lessonIndex) => send({ type: "PRACTICE", lessonIndex })}
                 onImportedReviewChange={setImportedReview}
+                onImportedReviewComplete={completeImportedReview}
+                onOpenTrainingWeek={openTrainingWeek}
               />
             )}
           </aside>
