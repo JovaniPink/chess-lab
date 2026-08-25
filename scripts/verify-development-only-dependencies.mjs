@@ -51,18 +51,23 @@ function visit(dependencies = {}, path = []) {
 visit(tree.dependencies);
 
 const lockedPackages = lock.packages ?? {};
-const netlifyCliVersion = lockedPackages["node_modules/netlify-cli"]?.version ?? "0.0.0";
-const netlifyDevUtilsVersion =
-  lockedPackages["node_modules/@netlify/dev-utils"]?.version ?? "0.0.0";
+const minimumNetlifyVersions = [
+  ["node_modules/netlify-cli", "netlify-cli", "27.3.0"],
+  ["node_modules/@netlify/dev", "@netlify/dev", "5.0.1"],
+  ["node_modules/@netlify/functions-dev", "@netlify/functions-dev", "2.0.1"],
+  ["node_modules/@netlify/dev-utils", "root @netlify/dev-utils", "5.0.0"],
+  [
+    "node_modules/netlify-cli/node_modules/@netlify/dev-utils",
+    "netlify-cli @netlify/dev-utils",
+    "6.0.1",
+  ],
+];
 
-if (!isAtLeast(netlifyCliVersion, "27.1.2")) {
-  violations.push(`package-lock.json: netlify-cli@${netlifyCliVersion} is older than 27.1.2`);
-}
-
-if (!isAtLeast(netlifyDevUtilsVersion, "5.0.0")) {
-  violations.push(
-    `package-lock.json: root @netlify/dev-utils@${netlifyDevUtilsVersion} is older than 5.0.0`,
-  );
+for (const [path, name, minimum] of minimumNetlifyVersions) {
+  const version = lockedPackages[path]?.version ?? "0.0.0";
+  if (!isAtLeast(version, minimum)) {
+    violations.push(`package-lock.json: ${name}@${version} is older than ${minimum}`);
+  }
 }
 
 const imageSizePaths = Object.entries(lockedPackages)
@@ -84,6 +89,6 @@ if (violations.length > 0) {
   process.exitCode = 1;
 } else {
   console.log(
-    "Verified: extract-zip and image-size are absent from production; production Sharp is >=0.35.0; the Netlify lock uses dev-utils >=5.0.0 with no image-size path.",
+    "Verified: extract-zip and image-size are absent from production; production Sharp is >=0.35.0; the supported Netlify 27.3 toolchain is locked with no image-size path.",
   );
 }
