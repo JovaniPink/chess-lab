@@ -9,7 +9,11 @@ const productionSiteUrl = "https://chess.measuredstudios.com";
 const requiredFiles = [
   "dist/index.html",
   "dist/_redirects",
+  "dist/apple-icon",
   "dist/favicon.svg",
+  "dist/icon.svg",
+  "dist/icon0",
+  "dist/icon1",
   "dist/manifest.webmanifest",
   "dist/og.png",
   "dist/robots.txt",
@@ -43,6 +47,32 @@ if (
     !renderedHomepage.includes(`"url":"${productionSiteUrl}"`))
 ) {
   throw new Error("The production Open Graph or structured-data URL is not canonical.");
+}
+
+for (const expectedTag of [
+  'rel="icon" href="/icon.svg',
+  'rel="icon" href="/icon0',
+  'rel="icon" href="/icon1',
+  'rel="apple-touch-icon" href="/apple-icon',
+]) {
+  if (!renderedHomepage.includes(expectedTag)) {
+    throw new Error(`The production homepage is missing favicon metadata: ${expectedTag}`);
+  }
+}
+
+const pngSignature = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]);
+for (const iconPath of ["dist/apple-icon", "dist/icon0", "dist/icon1"]) {
+  const icon = await readFile(path.join(projectRoot, iconPath));
+  if (!icon.subarray(0, pngSignature.length).equals(pngSignature)) {
+    throw new Error(`${iconPath} is not a PNG artifact.`);
+  }
+}
+
+const manifest = JSON.parse(
+  await readFile(path.join(projectRoot, "dist/manifest.webmanifest"), "utf8"),
+);
+if (!Array.isArray(manifest.icons) || manifest.icons.length !== 4) {
+  throw new Error("The web manifest does not publish the complete favicon set.");
 }
 
 const robots = await readFile(path.join(projectRoot, "dist/robots.txt"), "utf8");

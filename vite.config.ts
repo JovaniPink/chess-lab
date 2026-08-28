@@ -25,7 +25,16 @@ export default defineConfig(({ command }) => {
       nitro({
         preset: "netlify",
         prerender: {
-          routes: ["/", "/manifest.webmanifest", "/robots.txt", "/sitemap.xml"],
+          routes: [
+            "/",
+            "/apple-icon",
+            "/icon.svg",
+            "/icon0",
+            "/icon1",
+            "/manifest.webmanifest",
+            "/robots.txt",
+            "/sitemap.xml",
+          ],
           failOnError: true,
         },
       }),

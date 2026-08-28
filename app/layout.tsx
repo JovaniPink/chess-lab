@@ -37,7 +37,6 @@ export const metadata: Metadata = {
   applicationName: SITE_NAME,
   authors: [{ name: "Jovani Pink" }],
   alternates: { canonical: "/" },
-  icons: { icon: [{ url: "/favicon.svg", type: "image/svg+xml" }] },
   openGraph: {
     type: "website",
     url: "/",
