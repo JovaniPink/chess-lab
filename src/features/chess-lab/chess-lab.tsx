@@ -31,6 +31,7 @@ import {
   parsePgn,
   playMove,
 } from "@/lib/chess";
+import { SITE_NAME } from "@/lib/site-config";
 import { cn } from "@/lib/utils";
 import type { CandidateMove, MoveRecord, ParsedGame, SubmittedAnswer } from "@/types/chess";
 import { ChessBoard } from "./chess-board";
@@ -276,7 +277,7 @@ export function ChessLab() {
             <BrainCircuit size={21} />
           </div>
           <div>
-            <p>Jovani Chess Lab</p>
+            <p>{SITE_NAME}</p>
             <span>Think clearly. Learn from the board.</span>
           </div>
         </div>
@@ -563,11 +564,16 @@ export function ChessLab() {
       {isOriginal && !inTrainingPlan && <FailureSummary />}
 
       <footer className="site-footer">
-        <p>Jovani Chess Lab</p>
-        <span>
+        <p>{SITE_NAME}</p>
+        <span className="site-footer-copy">
           Games, answers, and review notes stay only in this open tab. No account, upload,
           analytics, engine, or external service.
         </span>
+        <nav className="site-footer-links" aria-label="Chess Lab information">
+          <a href="https://measuredstudios.com/lab">Studio Lab</a>
+          <a href="https://measuredstudios.com/privacy">Privacy</a>
+          <a href="https://github.com/JovaniPink/chess-lab">Source</a>
+        </nav>
       </footer>
 
       <p className="sr-only" role="status" aria-live="polite">

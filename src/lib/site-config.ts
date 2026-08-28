@@ -1,6 +1,8 @@
-export const SITE_NAME = "Jovani Chess Lab";
+export const SITE_NAME = "Chess Lab by Measured Studios";
+export const SITE_TITLE = "Chess Lab | Measured Studios";
 export const SITE_DESCRIPTION =
   "An interactive, human-first chess analysis and training workspace built around one real game.";
+export const PRODUCTION_SITE_URL = "https://chess.measuredstudios.com";
 
 function normalizeAppEnv(value?: string) {
   switch (value) {
@@ -22,5 +24,5 @@ export const isProduction = appEnv === "prd";
 export const configuredSiteUrl = (
   process.env.CHESS_LAB_SITE_URL ??
   process.env.NEXT_PUBLIC_SITE_URL ??
-  "http://localhost:5173"
+  (isProduction ? PRODUCTION_SITE_URL : "http://localhost:5173")
 ).replace(/\/$/, "");

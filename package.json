@@ -13,7 +13,6 @@
     "build": "vite build && npm run validate:artifact",
     "start": "netlify serve --offline --context production",
     "deploy:netlify": "netlify deploy --build",
-    "deploy:netlify:prod": "netlify deploy --build --prod",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:artifact": "node --test tests/netlify-artifact.test.mjs",
@@ -71,5 +70,5 @@
     "sharp": "0.35.3"
   },
   "type": "module",
-  "displayName": "Jovani Chess Lab"
+  "displayName": "Chess Lab by Measured Studios"
 }
