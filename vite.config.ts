@@ -8,9 +8,9 @@ export default defineConfig(({ command }) => {
   const appEnv = netlifyContext === "production" ? "prd" : netlifyContext === "dev" ? "dev" : "stg";
   const deployUrl = process.env.DEPLOY_PRIME_URL ?? process.env.URL;
   const siteUrl =
-    process.env.NEXT_PUBLIC_SITE_URL ??
-    (netlifyContext === "production" ? PRODUCTION_SITE_URL : deployUrl) ??
-    "http://localhost:5173";
+    netlifyContext === "production"
+      ? PRODUCTION_SITE_URL
+      : (process.env.NEXT_PUBLIC_SITE_URL ?? deployUrl ?? "http://localhost:5173");
 
   return {
     define: {
