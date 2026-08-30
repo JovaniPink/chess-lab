@@ -101,6 +101,19 @@ if (!/path: "\/\*"/.test(functionWrapper)) {
 }
 
 const netlifyConfig = await readFile(path.join(projectRoot, "netlify.toml"), "utf8");
+for (const requiredRedirectControl of [
+  'from = "https://chess-labs.netlify.app/*"',
+  'to = "https://chess.measuredstudios.com/:splat"',
+  "status = 301",
+  "force = true",
+]) {
+  if (!netlifyConfig.includes(requiredRedirectControl)) {
+    throw new Error(
+      `Netlify configuration is missing default-domain redirect control: ${requiredRedirectControl}`,
+    );
+  }
+}
+
 for (const requiredControl of [
   "Content-Security-Policy",
   "Cross-Origin-Opener-Policy",
