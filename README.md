@@ -1,6 +1,6 @@
-# Jovani Chess Lab
+# Chess Lab by Measured Studios
 
-Jovani Chess Lab is an interactive, human-first chess analysis and training workspace built around Jovani Pink's July 20, 2026 game against the computer.
+Chess Lab by Measured Studios is an interactive, human-first chess analysis and training workspace built around Jovani Pink's July 20, 2026 game against the computer.
 
 The app reconstructs the complete game, explains the decision chain behind the loss, and turns five critical positions into legal, board-driven exercises.
 
@@ -131,14 +131,17 @@ npm run build
 npm run test:artifact
 ```
 
-Once the directory is linked, preview and production deploys are available through:
+Once the directory is linked, a preview deploy is available through:
 
 ```bash
 npm run deploy:netlify
-npm run deploy:netlify:prod
 ```
 
-The Netlify build converts `CONTEXT` into the public application environment and embeds the current deploy URL in the server bundle. Artifact validation follows that same contract: deploy previews must remain non-indexed and omit a sitemap from `robots.txt`, while the production context must be indexable and use the canonical production sitemap URL. A local `npm run build` defaults to the production contract when `CONTEXT` is unset.
+Production deploys come from reviewed merges to GitHub `main`; routine local or API production deploys are outside the release contract. Netlify provider rollback is the owner-controlled break-glass path.
+
+The Netlify build converts `CONTEXT` into the public application environment. Production uses `https://chess.measuredstudios.com` as the canonical URL. Deploy previews use their unique deploy URL, remain non-indexed, and omit a sitemap from `robots.txt`. A local `npm run build` defaults to the production contract when `CONTEXT` is unset.
+
+Security, traffic, billing, and rollback controls are documented in [Netlify operations](docs/netlify-operations.md).
 
 ## Architecture
 

@@ -1709,8 +1709,25 @@ input[type="range"] {
   font-weight: 900;
   white-space: nowrap;
 }
-.site-footer span {
+.site-footer-copy {
+  max-width: 660px;
   text-align: right;
+}
+.site-footer-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  white-space: nowrap;
+}
+.site-footer-links a {
+  color: var(--forest);
+  font-weight: 800;
+  text-decoration: underline;
+  text-decoration-color: var(--line);
+  text-underline-offset: 3px;
+}
+.site-footer-links a:hover {
+  text-decoration-color: currentColor;
 }
 
 .button-base {
@@ -2062,7 +2079,7 @@ input[type="range"] {
     flex-direction: column;
     gap: 8px;
   }
-  .site-footer span {
+  .site-footer-copy {
     text-align: left;
   }
   .training-plan {

@@ -1,8 +1,12 @@
-export const SITE_NAME = "Jovani Chess Lab";
+export const SITE_NAME = "Chess Lab by Measured Studios";
+export const SITE_TITLE = "Chess Lab | Measured Studios";
 export const SITE_DESCRIPTION =
   "An interactive, human-first chess analysis and training workspace built around one real game.";
+export const PRODUCTION_SITE_URL = "https://chess.measuredstudios.com";
 
-function normalizeAppEnv(value?: string) {
+export type AppEnvironment = "dev" | "stg" | "prd";
+
+function normalizeAppEnv(value?: string): AppEnvironment {
   switch (value) {
     case "production":
       return "prd";
@@ -10,8 +14,12 @@ function normalizeAppEnv(value?: string) {
       return "stg";
     case "development":
       return "dev";
+    case "dev":
+    case "stg":
+    case "prd":
+      return value;
     default:
-      return value || "stg";
+      return "stg";
   }
 }
 
@@ -20,7 +28,9 @@ export const appEnv = normalizeAppEnv(
 );
 export const isProduction = appEnv === "prd";
 export const configuredSiteUrl = (
-  process.env.CHESS_LAB_SITE_URL ??
-  process.env.NEXT_PUBLIC_SITE_URL ??
-  "http://localhost:5173"
+  isProduction
+    ? PRODUCTION_SITE_URL
+    : (process.env.CHESS_LAB_SITE_URL ??
+      process.env.NEXT_PUBLIC_SITE_URL ??
+      "http://localhost:5173")
 ).replace(/\/$/, "");

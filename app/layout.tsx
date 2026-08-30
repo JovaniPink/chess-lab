@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Bricolage_Grotesque, Fraunces, IBM_Plex_Mono } from "next/font/google";
 import type { ReactNode } from "react";
-import { SITE_DESCRIPTION, SITE_NAME, configuredSiteUrl } from "@/lib/site-config";
+import { SITE_DESCRIPTION, SITE_NAME, SITE_TITLE, configuredSiteUrl } from "@/lib/site-config";
 import "./globals.css";
 
 const bricolage = Bricolage_Grotesque({
@@ -32,23 +32,22 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   metadataBase: new URL(configuredSiteUrl),
-  title: SITE_NAME,
+  title: SITE_TITLE,
   description: SITE_DESCRIPTION,
   applicationName: SITE_NAME,
   authors: [{ name: "Jovani Pink" }],
   alternates: { canonical: "/" },
-  icons: { icon: [{ url: "/favicon.svg", type: "image/svg+xml" }] },
   openGraph: {
     type: "website",
     url: "/",
     siteName: SITE_NAME,
-    title: SITE_NAME,
+    title: SITE_TITLE,
     description: SITE_DESCRIPTION,
-    images: [{ url: "/og.png", width: 1200, height: 630, alt: "Jovani Chess Lab" }],
+    images: [{ url: "/og.png", width: 1200, height: 630, alt: SITE_NAME }],
   },
   twitter: {
     card: "summary_large_image",
-    title: SITE_NAME,
+    title: SITE_TITLE,
     description: SITE_DESCRIPTION,
     images: ["/og.png"],
   },

@@ -44,10 +44,23 @@ test("the packaged Netlify site serves the production Chess Lab", async () => {
 
     assert.equal(response.status, 200, output.join(""));
     assert.match(response.headers.get("content-type") ?? "", /^text\/html\b/i);
+    assert.match(
+      response.headers.get("content-security-policy") ?? "",
+      /default-src 'self'.*object-src 'none'.*frame-ancestors 'none'.*connect-src 'self'/,
+    );
+    assert.equal(response.headers.get("cross-origin-opener-policy"), "same-origin");
+    assert.equal(response.headers.get("cross-origin-resource-policy"), "same-origin");
+    assert.equal(response.headers.get("x-content-type-options"), "nosniff");
+    assert.equal(response.headers.get("x-frame-options"), "DENY");
+    assert.equal(response.headers.get("x-permitted-cross-domain-policies"), "none");
+    assert.match(response.headers.get("permissions-policy") ?? "", /camera=\(\)/);
     const html = await response.text();
-    assert.match(html, /Jovani Chess Lab/i);
+    assert.match(html, /Chess Lab by Measured Studios/i);
     assert.match(html, /One loose knight opened the road to mate/i);
     assert.match(html, /og\.png/i);
+    assert.match(html, /<link rel="canonical" href="https:\/\/chess\.measuredstudios\.com"/);
+    assert.match(html, /<meta property="og:url" content="https:\/\/chess\.measuredstudios\.com"/);
+    assert.match(html, /"url":"https:\/\/chess\.measuredstudios\.com"/);
   } finally {
     stopProcess(child);
   }
@@ -60,12 +73,12 @@ test("the packaged Netlify function renders the root path", async () => {
   handlerUrl.searchParams.set("test", `${process.pid}-${Date.now()}`);
   const { default: handler } = await import(handlerUrl.href);
 
-  const response = await handler(new Request("https://chess-labs.netlify.app/"));
+  const response = await handler(new Request("https://chess.measuredstudios.com/"));
 
   assert.equal(response.status, 200);
   assert.match(response.headers.get("content-type") ?? "", /^text\/html\b/i);
   const html = await response.text();
-  assert.match(html, /Jovani Chess Lab/i);
+  assert.match(html, /Chess Lab by Measured Studios/i);
   assert.match(html, /One loose knight opened the road to mate/i);
 });
 
@@ -76,13 +89,13 @@ test("the production bundle permits indexing", async () => {
   handlerUrl.searchParams.set("test", `${process.pid}-${Date.now()}`);
   const { default: handler } = await import(handlerUrl.href);
 
-  const response = await handler(new Request("https://chess-labs.netlify.app/robots.txt"));
+  const response = await handler(new Request("https://chess.measuredstudios.com/robots.txt"));
 
   assert.equal(response.status, 200);
   const robots = await response.text();
   assert.match(robots, /Allow: \//);
   assert.doesNotMatch(robots, /Disallow: \//);
-  assert.match(robots, /Sitemap: https:\/\/.+\/sitemap\.xml/);
+  assert.match(robots, /Sitemap: https:\/\/chess\.measuredstudios\.com\/sitemap\.xml/);
 });
 
 async function availablePort() {
