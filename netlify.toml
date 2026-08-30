@@ -28,6 +28,7 @@
 [[redirects]]
   from = "/*"
   to = "/:splat"
+  status = 200
 
   [redirects.rate_limit]
     window_limit = 120

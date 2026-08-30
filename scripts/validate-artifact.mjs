@@ -107,6 +107,7 @@ for (const requiredControl of [
   "Cross-Origin-Resource-Policy",
   "Permissions-Policy",
   "X-Permitted-Cross-Domain-Policies",
+  "status = 200",
   "window_limit = 120",
   'aggregate_by = ["ip", "domain"]',
 ]) {
