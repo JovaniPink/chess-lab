@@ -12,6 +12,12 @@
   targetPort = 5173
   port = 8888
 
+[[redirects]]
+  from = "https://chess-labs.netlify.app/*"
+  to = "https://chess.measuredstudios.com/:splat"
+  status = 301
+  force = true
+
 [[headers]]
   for = "/*"
 
