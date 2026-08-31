@@ -98,6 +98,25 @@ test("the production bundle permits indexing", async () => {
   assert.match(robots, /Sitemap: https:\/\/chess\.measuredstudios\.com\/sitemap\.xml/);
 });
 
+test("the packaged function serves the public knowledge projection", async () => {
+  const handlerUrl = pathToFileURL(
+    path.join(projectRoot, ".netlify/functions-internal/server/main.mjs"),
+  );
+  handlerUrl.searchParams.set("test", `${process.pid}-${Date.now()}`);
+  const { default: handler } = await import(handlerUrl.href);
+
+  const response = await handler(new Request("https://chess.measuredstudios.com/knowledge.json"));
+
+  assert.equal(response.status, 200);
+  assert.match(response.headers.get("content-type") ?? "", /^application\/json\b/i);
+  assert.equal(response.headers.get("x-content-type-options"), "nosniff");
+  const index = await response.json();
+  assert.equal(index.projectId, "chess-lab");
+  assert.equal(index.objects.length, 13);
+  assert.equal(index.objects.filter(({ kind }) => kind === "source").length, 1);
+  assert.equal(index.objects.filter(({ kind }) => kind === "scenario").length, 5);
+});
+
 async function availablePort() {
   return new Promise((resolve, reject) => {
     const server = net.createServer();
