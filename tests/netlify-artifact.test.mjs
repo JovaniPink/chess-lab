@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
+import { createHash } from "node:crypto";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import net from "node:net";
 import path from "node:path";
@@ -58,9 +59,22 @@ test("the packaged Netlify site serves the production Chess Lab", async () => {
     assert.match(html, /Chess Lab by Measured Studios/i);
     assert.match(html, /One loose knight opened the road to mate/i);
     assert.match(html, /og\.png/i);
+    assert.match(html, /favicon\.ico/i);
     assert.match(html, /<link rel="canonical" href="https:\/\/chess\.measuredstudios\.com"/);
     assert.match(html, /<meta property="og:url" content="https:\/\/chess\.measuredstudios\.com"/);
     assert.match(html, /"url":"https:\/\/chess\.measuredstudios\.com"/);
+
+    const faviconResponse = await fetch(`http://127.0.0.1:${port}/favicon.ico`);
+    assert.equal(faviconResponse.status, 200);
+    assert.match(
+      faviconResponse.headers.get("content-type") ?? "",
+      /^image\/(?:x-icon|vnd\.microsoft\.icon)\b/i,
+    );
+    const favicon = Buffer.from(await faviconResponse.arrayBuffer());
+    assert.equal(
+      createHash("sha256").update(favicon).digest("hex"),
+      "4ffb3392f942cdb32f65a0ae18fe3e9536dc2bea0bde46d5ac87eed812701865",
+    );
   } finally {
     stopProcess(child);
   }

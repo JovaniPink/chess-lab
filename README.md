@@ -66,46 +66,50 @@ do not use browser storage, uploads, accounts, analytics, engines, or external s
 
 Requirements:
 
-- Node.js 22.15 or newer
-- npm 10.9.2 when updating `package-lock.json`
+- Node.js 22.22.2+ or 24.15.0+
+- npm 12.0.2 through Corepack when installing or updating `package-lock.json`
 
 Install and run:
 
 ```bash
-npm ci
-npm run dev
+corepack npm ci
+corepack npm run dev
 ```
 
 Vite normally serves the app at `http://localhost:5173`.
 
-The repository records `npm@10.9.2` as its package manager because GitHub Actions
-uses Node 22.15.0 and that npm release. Keep manifest and lockfile updates on that
-version so `npm ci` validates the same graph locally and in CI.
+The repository integrity-pins `npm@12.0.2`, tests Node 22 and 24 in GitHub Actions,
+and uses exact direct dependency versions. Keep manifest and lockfile updates on that
+npm release so `corepack npm ci` validates the same graph locally and in CI.
 
 ## Quality gates
 
 Run the complete gate:
 
 ```bash
-npm run test-all
+corepack npm install-scripts ls
+corepack npm run test-all
 ```
 
 Or run checks independently:
 
 ```bash
-npm run lint
-npm run typecheck
-npm run test
-npm run audit:production
-npm run security:transitive-guards
-npm run build
-npm run test:artifact
+corepack npm run lint
+corepack npm run typecheck
+corepack npm run typecheck:compat
+corepack npm run test
+corepack npm run audit:production
+corepack npm run audit:dependencies
+corepack npm run security:transitive-guards
+corepack npm run build
+corepack npm run test:artifact
 ```
 
-`npm run test-all` includes the production dependency audit and fails on high-severity findings in
-the shipped application graph. The transitive guard keeps the documented Netlify exception out of
-production, rejects Sharp versions older than 0.35.0, and prevents the lockfile from reintroducing
-the removed `image-size` path. The lock uses Netlify CLI 27.3.0, while its supported
+`corepack npm run test-all` includes the production audit and an allowlisted full dependency audit.
+The latter runs npm's complete audit and succeeds only when the remaining findings are the three
+documented development-only paths caused by `GHSA-jmr9-qjv8-65gv`; every other advisory fails. The
+transitive guard keeps that exception out of production, rejects Sharp versions older than 0.35.0,
+and prevents the lockfile from reintroducing the removed `image-size` path. The lock uses Netlify CLI 27.3.0, while its supported
 `@netlify/functions-dev` path still selects vulnerable `extract-zip@2.0.1`, for which no fixed
 release exists. That development-tool exception is monitored in
 [issue #4](https://github.com/JovaniPink/chess-lab/issues/4). Do not use `npm audit fix --force` or
@@ -113,6 +117,13 @@ downgrade the runtime toolchain merely to make that separate audit green. The na
 override, remaining paths, review deadline, and removal criteria are documented in
 [docs/dependency-security.md](docs/dependency-security.md). Every toolchain override must pass the
 production audit, Vinext/Nitro build, and packaged Netlify runtime tests.
+
+## Product identity
+
+Chess Lab retains its existing acid-lime knight mark, 48- and 192-pixel app icons, Apple icon, and
+reviewed 1200x630 social card. `corepack npm run generate:favicon` deterministically produces the
+conventional 64-pixel `favicon.ico`; the complete gate verifies its exact bytes, all rendered icon
+dimensions, manifest declarations, metadata links, and the social-card digest.
 
 ## Netlify
 
@@ -127,14 +138,14 @@ npx netlify init
 To test the complete Netlify build locally:
 
 ```bash
-npm run build
-npm run test:artifact
+corepack npm run build
+corepack npm run test:artifact
 ```
 
 Once the directory is linked, a preview deploy is available through:
 
 ```bash
-npm run deploy:netlify
+corepack npm run deploy:netlify
 ```
 
 Production deploys come from reviewed merges to GitHub `main`; routine local or API production deploys are outside the release contract. Netlify provider rollback is the owner-controlled break-glass path.
