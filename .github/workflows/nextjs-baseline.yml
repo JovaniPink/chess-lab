@@ -20,6 +20,6 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: JovaniPink/nextjs-typescript-boilerplate/baseline/v1@4a698a43f70f14daba6553157190686d445ccdbc
+      - uses: JovaniPink/nextjs-typescript-boilerplate/baseline/v1@e8a000d6dda19c41eb4fe96463ca6df780f8dd9e
         with:
           check-latest: ${{ github.event_name == 'schedule' }}
