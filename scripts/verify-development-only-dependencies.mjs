@@ -3,8 +3,13 @@ import { readFileSync } from "node:fs";
 
 const lock = JSON.parse(readFileSync(new URL("../package-lock.json", import.meta.url), "utf8"));
 
+const npmExecutable = process.env.npm_execpath;
+if (!npmExecutable) {
+  throw new Error("Run this guard through the integrity-pinned npm script boundary.");
+}
+
 const tree = JSON.parse(
-  execFileSync("npm", ["ls", "--omit=dev", "--all", "--json"], {
+  execFileSync(process.execPath, [npmExecutable, "ls", "--omit=dev", "--all", "--json"], {
     encoding: "utf8",
   }),
 );
@@ -55,7 +60,6 @@ const minimumNetlifyVersions = [
   ["node_modules/netlify-cli", "netlify-cli", "27.3.0"],
   ["node_modules/@netlify/dev", "@netlify/dev", "5.0.1"],
   ["node_modules/@netlify/functions-dev", "@netlify/functions-dev", "2.0.1"],
-  ["node_modules/@netlify/dev-utils", "root @netlify/dev-utils", "5.0.0"],
   [
     "node_modules/netlify-cli/node_modules/@netlify/dev-utils",
     "netlify-cli @netlify/dev-utils",
@@ -67,6 +71,18 @@ for (const [path, name, minimum] of minimumNetlifyVersions) {
   const version = lockedPackages[path]?.version ?? "0.0.0";
   if (!isAtLeast(version, minimum)) {
     violations.push(`package-lock.json: ${name}@${version} is older than ${minimum}`);
+  }
+}
+
+const netlifyDevUtilsPaths = Object.entries(lockedPackages).filter(([path]) =>
+  path.endsWith("node_modules/@netlify/dev-utils"),
+);
+if (netlifyDevUtilsPaths.length === 0) {
+  violations.push("package-lock.json: no @netlify/dev-utils path is present");
+}
+for (const [path, metadata] of netlifyDevUtilsPaths) {
+  if (!isAtLeast(metadata.version ?? "0.0.0", "5.0.0")) {
+    violations.push(`${path}@${metadata.version ?? "unknown"} is older than 5.0.0`);
   }
 }
 

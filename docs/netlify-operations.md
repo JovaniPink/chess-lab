@@ -27,7 +27,7 @@ The repository limits the whole site to 120 requests per 60 seconds for each IP 
 After each production release, confirm:
 
 1. GitHub `main` and the Netlify production deploy reference the same commit.
-2. The deploy log used `npm run build` from `netlify.toml`, Node 22.15.0, and skipped Netlify's Next.js plugin in favor of Vinext and Nitro.
+2. The deploy log used `corepack npm run build` from `netlify.toml`, Node 22.22.2, npm 12.0.2, and skipped Netlify's Next.js plugin in favor of Vinext and Nitro.
 3. Netlify accepted the rate-limit rule during post-processing.
 4. The custom domain has a valid certificate and returns the expected CSP and security headers.
 5. Canonical metadata, Open Graph URL, robots, and sitemap use `https://chess.measuredstudios.com`.

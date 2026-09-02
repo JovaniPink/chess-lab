@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { access, readFile } from "node:fs/promises";
 import path from "node:path";
 import process from "node:process";
@@ -10,6 +11,7 @@ const requiredFiles = [
   "dist/index.html",
   "dist/_redirects",
   "dist/apple-icon",
+  "dist/favicon.ico",
   "dist/favicon.svg",
   "dist/icon.svg",
   "dist/icon0",
@@ -50,6 +52,7 @@ if (
 }
 
 for (const expectedTag of [
+  'rel="icon" href="/favicon.ico',
   'rel="icon" href="/icon.svg',
   'rel="icon" href="/icon0',
   'rel="icon" href="/icon1',
@@ -61,17 +64,50 @@ for (const expectedTag of [
 }
 
 const pngSignature = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]);
-for (const iconPath of ["dist/apple-icon", "dist/icon0", "dist/icon1"]) {
+for (const [iconPath, expectedWidth, expectedHeight] of [
+  ["dist/apple-icon", 180, 180],
+  ["dist/icon0", 48, 48],
+  ["dist/icon1", 192, 192],
+  ["dist/og.png", 1200, 630],
+]) {
   const icon = await readFile(path.join(projectRoot, iconPath));
   if (!icon.subarray(0, pngSignature.length).equals(pngSignature)) {
     throw new Error(`${iconPath} is not a PNG artifact.`);
   }
+  if (icon.readUInt32BE(16) !== expectedWidth || icon.readUInt32BE(20) !== expectedHeight) {
+    throw new Error(`${iconPath} does not have the expected dimensions.`);
+  }
+}
+
+const favicon = await readFile(path.join(projectRoot, "dist/favicon.ico"));
+if (
+  favicon.readUInt16LE(0) !== 0 ||
+  favicon.readUInt16LE(2) !== 1 ||
+  favicon.readUInt16LE(4) < 1 ||
+  (favicon[6] || 256) !== 64 ||
+  (favicon[7] || 256) !== 64
+) {
+  throw new Error("The browser favicon is not the expected 64-pixel ICO artifact.");
+}
+if (
+  createHash("sha256").update(favicon).digest("hex") !==
+  "4ffb3392f942cdb32f65a0ae18fe3e9536dc2bea0bde46d5ac87eed812701865"
+) {
+  throw new Error("The browser favicon does not match the reviewed Chess Lab identity.");
+}
+
+const socialImage = await readFile(path.join(projectRoot, "dist/og.png"));
+if (
+  createHash("sha256").update(socialImage).digest("hex") !==
+  "9b9310d40e4d395ce772f9f9f582904eedde3d65898258fdf11b184d784be564"
+) {
+  throw new Error("The social image does not match the reviewed Chess Lab identity.");
 }
 
 const manifest = JSON.parse(
   await readFile(path.join(projectRoot, "dist/manifest.webmanifest"), "utf8"),
 );
-if (!Array.isArray(manifest.icons) || manifest.icons.length !== 4) {
+if (!Array.isArray(manifest.icons) || manifest.icons.length !== 5) {
   throw new Error("The web manifest does not publish the complete favicon set.");
 }
 
