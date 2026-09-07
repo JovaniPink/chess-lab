@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
+import { createRequire } from "node:module";
 import { createHash } from "node:crypto";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import net from "node:net";
@@ -12,7 +13,35 @@ const netlifyCli = fileURLToPath(
   new URL("../node_modules/netlify-cli/bin/run.js", import.meta.url),
 );
 
-test("the packaged Netlify site serves the production Chess Lab", async () => {
+test("Netlify edge rules preserve the prerendered metadata MIME types", async () => {
+  const netlifyRequire = createRequire(netlifyCli);
+  const { parseAllHeaders } = await import(
+    pathToFileURL(netlifyRequire.resolve("@netlify/headers-parser")).href
+  );
+  const { headers, errors } = await parseAllHeaders({
+    netlifyConfigPath: path.join(projectRoot, "netlify.toml"),
+    headersFiles: [path.join(projectRoot, "dist/_headers")],
+    minimal: false,
+  });
+  assert.deepEqual(errors, []);
+
+  for (const [route, contentType] of [
+    ["/icon0", "image/png"],
+    ["/icon1", "image/png"],
+    ["/apple-icon", "image/png"],
+    ["/manifest.webmanifest", "application/manifest+json"],
+  ]) {
+    const matchingHeaders = headers.filter(({ forRegExp }) => forRegExp.test(route));
+    const values = new Headers();
+    for (const rule of matchingHeaders) {
+      for (const [name, value] of Object.entries(rule.values)) values.set(name, value);
+    }
+    assert.equal(values.get("content-type"), contentType, route);
+    assert.equal(values.get("x-content-type-options"), "nosniff", route);
+  }
+});
+
+test("the packaged Netlify site serves the production Chess Lab", async (t) => {
   const port = await availablePort();
   const functionsPort = await availablePort();
   const output = [];
@@ -75,6 +104,38 @@ test("the packaged Netlify site serves the production Chess Lab", async () => {
       createHash("sha256").update(favicon).digest("hex"),
       "4ffb3392f942cdb32f65a0ae18fe3e9536dc2bea0bde46d5ac87eed812701865",
     );
+
+    for (const [route, size] of [
+      ["icon0", 48],
+      ["icon1", 192],
+      ["apple-icon", 180],
+    ]) {
+      await t.test(`${route} serves PNG bytes with the declared size`, async () => {
+        const iconResponse = await fetch(`http://127.0.0.1:${port}/${route}`);
+        assert.equal(iconResponse.status, 200);
+        // Netlify CLI's proxy overwrites custom Content-Type in writeHead.
+        // The edge MIME rules are checked separately with Netlify's parser above.
+        assert.equal(iconResponse.headers.get("x-content-type-options"), "nosniff");
+        const icon = Buffer.from(await iconResponse.arrayBuffer());
+        assert.deepEqual(icon.subarray(0, 8), Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]));
+        assert.equal(icon.readUInt32BE(16), size);
+        assert.equal(icon.readUInt32BE(20), size);
+      });
+    }
+
+    await t.test("the web manifest serves JSON with the manifest MIME type", async () => {
+      const manifestResponse = await fetch(`http://127.0.0.1:${port}/manifest.webmanifest`);
+      assert.equal(manifestResponse.status, 200);
+      assert.match(
+        manifestResponse.headers.get("content-type") ?? "",
+        /^application\/manifest\+json\b/i,
+      );
+      assert.equal(manifestResponse.headers.get("x-content-type-options"), "nosniff");
+      const manifest = await manifestResponse.json();
+      assert.equal(manifest.name, "Chess Lab by Measured Studios");
+      assert.equal(manifest.start_url, "/");
+      assert.equal(manifest.icons.length, 5);
+    });
   } finally {
     stopProcess(child);
   }
