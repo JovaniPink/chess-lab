@@ -104,6 +104,11 @@ The audit totals are eight high and one moderate findings, including wrapper pat
 build/functions tooling. The production graph remains clean. Resolving this needs separately scoped
 compatibility and dependency work; suppressing findings would violate the repository gate.
 
+The development server also logged intermittent `@vitejs/plugin-rsc` errors during hot rebuilds
+(`Cannot read properties of undefined (reading 'import')`). Final acceptance therefore used the
+packaged runtime independently. This work does not claim to repair development-server internals;
+no framework versions or artifact contracts were changed.
+
 ## Remaining release acceptance
 
 The full gate and hosted CI on Node 22 and 24 must pass before release. No deployment is included.
