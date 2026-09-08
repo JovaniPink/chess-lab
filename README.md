@@ -7,8 +7,8 @@ The app reconstructs the complete game, explains the decision chain behind the l
 ## Product features
 
 - Complete 30-ply replay with autoplay, previous/next controls, scrubber, and clickable notation
-- Five guided lessons playable directly on the board or through accessible candidate controls
-- Legal variation exploration with promotion choice and branch reset
+- Five guided lessons with retries before solution reveal, hint tracking, and a session recap
+- Legal variation exploration with native promotion choice, one-move undo, and branch reset
 - PGN importing with player, result, and move validation
 - Human-first imported-game review with memory capture, critical-position markers, one primary
   error category, and one corrective drill
@@ -34,8 +34,9 @@ and a drill are present. Critical positions are stored by replay ply and are rec
 the existing `chess.js` path; copied board states and engine evaluations are not authoritative.
 
 The imported PGN, notes, markers, classification, and drill live only in React state for the open
-tab. They reset when another PGN is loaded or the bundled lesson is restored, and disappear on
-reload or tab close. Do not add browser storage, uploads, accounts, analytics, engines, or another
+tab. Each import receives its own session identity, including repeated imports of identical notation.
+Games and unfinished reviews remain accessible through Games in this tab while switching modes.
+All state disappears on reload or tab close. Do not add browser storage, uploads, accounts, analytics, engines, or another
 external service without a separate product and privacy decision.
 
 ## Training-plan contract
@@ -50,6 +51,29 @@ re-completing the same review updates or moves its stable link instead of duplic
 The complete plan and its linked reviews live in React memory for the open tab. They remain
 available while switching between study modes, but a reload or closed tab starts a fresh plan. They
 do not use browser storage, uploads, accounts, analytics, engines, or external services.
+
+## Learning workflow and takeaways
+
+Start with the five-position lesson, or choose Review your game to import notation. Incorrect
+answers reveal only the attempted move's feedback until the learner explicitly requests the
+coached move. Retries and hints remain in the run history. The recap distinguishes unassisted
+solutions, assisted solutions, reveals, and skips; targeted retry selects revealed/skipped positions.
+Switching modes or loading another game preserves the unfinished practice run.
+
+Imported review starts with first impressions and an optional Skip for now action, followed by
+Positions, Diagnosis and drill, and Complete. Skipping impressions does not waive the completion
+requirement for nonblank thoughts. Links in the selected training week reopen the source game
+and exact marked position. Editing a completed review marks its existing link as needing completion
+again; re-completion updates that link and moves it when the chosen week changes.
+
+The training view leads with the selected week and linked drills. Cycle goals, activity counts,
+decision-quality signals, and reflection use disclosures whose state survives view changes.
+Copy summary and Print summary provide read-only takeaways for the current review, practice recap,
+or selected week. Clipboard failures expose selectable text. Summaries exclude raw PGN and unrelated
+games; they are not a state export or restoration format.
+
+Implementation validation and outstanding release limitations are recorded in
+[the learning-experience validation notes](docs/learning-experience-validation.md).
 
 ## Technology
 
