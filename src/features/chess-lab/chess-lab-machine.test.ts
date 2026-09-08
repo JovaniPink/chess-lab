@@ -27,7 +27,7 @@ describe("chess lab state machine", () => {
       type: "SUBMIT_ANSWER",
       answer: { san: "Nxc5", fen: "test-fen", correct: false },
     });
-    expect(actor.getSnapshot().matches("feedback")).toBe(true);
+    expect(actor.getSnapshot().context.run?.phase).toBe("incorrect");
     expect(actor.getSnapshot().context.submittedAnswer?.san).toBe("Nxc5");
 
     actor.send({
@@ -45,8 +45,16 @@ describe("chess lab state machine", () => {
   it("records and resets an exploration branch", () => {
     const actor = createActor(chessLabMachine).start();
     actor.send({ type: "EXPLORE", fen: "start" });
-    actor.send({ type: "BRANCH_MOVE", fen: "next", san: "e4", from: "e2", to: "e4" });
-    expect(actor.getSnapshot().context.branchMoves).toEqual(["e4"]);
+    actor.send({
+      type: "BRANCH_MOVE",
+      fen: "next",
+      san: "e4",
+      from: "e2",
+      to: "e4",
+      color: "w",
+      piece: "p",
+    });
+    expect(actor.getSnapshot().context.branchMoves).toMatchObject([{ san: "e4" }]);
     expect(actor.getSnapshot().context.branchFen).toBe("next");
 
     actor.send({ type: "RESET_BRANCH" });
@@ -62,4 +70,25 @@ describe("chess lab state machine", () => {
     expect(snapshot.matches("review")).toBe(true);
     expect(snapshot.context).toMatchObject({ currentPly: 0, maxPly: 7, submittedAnswer: null });
   });
+});
+
+it("retains attempts and hints across retry and game loading without counting reveal as solved", () => {
+  const actor = createActor(chessLabMachine).start();
+  actor.send({ type: "PRACTICE" });
+  actor.send({ type: "HINT" });
+  actor.send({ type: "SUBMIT_ANSWER", answer: { san: "e5", fen: "test", correct: false } });
+  actor.send({ type: "RETRY" });
+  actor.send({ type: "LOAD_GAME", maxPly: 4 });
+  actor.send({ type: "PRACTICE" });
+  expect(actor.getSnapshot().context.run?.progress["premature-advance"]).toMatchObject({
+    hintUsed: true,
+    outcome: "pending",
+    attempts: [{ san: "e5" }],
+  });
+  actor.send({ type: "REVEAL", answer: { san: "Be2", fen: "test", correct: true } });
+  expect(actor.getSnapshot().context.run?.progress["premature-advance"]).toMatchObject({
+    outcome: "revealed",
+    attempts: [{ san: "e5" }],
+  });
+  actor.stop();
 });

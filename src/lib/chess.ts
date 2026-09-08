@@ -104,8 +104,13 @@ export function candidateForMove(lesson: Lesson, san: string) {
   return lesson.candidates.find((candidate) => normalizeSan(candidate.san) === normalizeSan(san));
 }
 
-export function formatMoveLabel(ply: number, move: MoveRecord): string {
-  const moveNumber = Math.ceil((ply + 1) / 2);
+export function formatMoveLabel(
+  ply: number,
+  move: MoveRecord,
+  initialFen = new Chess().fen(),
+): string {
+  const fields = initialFen.split(" ");
+  const moveNumber = Number(fields[5]) + Math.floor((ply + (fields[1] === "b" ? 1 : 0)) / 2);
   return move.color === "w" ? `${moveNumber}. ${move.san}` : `${moveNumber}... ${move.san}`;
 }
 

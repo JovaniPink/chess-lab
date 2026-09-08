@@ -1,147 +1,212 @@
-import type { Square } from "chess.js";
 import { assign, setup } from "xstate";
 import { jovaniStudy } from "@/content/jovani-study";
-import type { SubmittedAnswer } from "@/types/chess";
-
+import type { MoveRecord, SubmittedAnswer } from "@/types/chess";
+import { createPracticeRun, practiceHabit, type PracticeRun } from "./practice-run";
+export type BranchMove = MoveRecord & { fen: string };
 export type ChessLabContext = {
   currentPly: number;
   maxPly: number;
   lessonIndex: number;
   submittedAnswer: SubmittedAnswer | null;
+  run: PracticeRun | null;
   branchStartFen: string;
+  branchStartLabel: string;
   branchFen: string;
-  branchMoves: string[];
-  branchLastMove: { from: Square; to: Square } | null;
+  branchMoves: BranchMove[];
+  branchLastMove: Pick<MoveRecord, "from" | "to"> | null;
 };
-
 export type ChessLabEvent =
-  | { type: "NEXT" }
-  | { type: "PREV" }
+  | {
+      type:
+        | "NEXT"
+        | "PREV"
+        | "PLAY"
+        | "PAUSE"
+        | "REVIEW"
+        | "RETRY"
+        | "HINT"
+        | "NEXT_LESSON"
+        | "SKIP"
+        | "UNDO_BRANCH"
+        | "RESET_BRANCH";
+    }
   | { type: "SEEK"; ply: number }
-  | { type: "PLAY" }
-  | { type: "PAUSE" }
-  | { type: "REVIEW" }
-  | { type: "EXPLORE"; fen: string }
-  | { type: "PRACTICE"; lessonIndex?: number }
-  | { type: "SUBMIT_ANSWER"; answer: SubmittedAnswer }
-  | { type: "NEXT_LESSON" }
-  | { type: "LOAD_GAME"; maxPly: number }
-  | { type: "BRANCH_MOVE"; fen: string; san: string; from: Square; to: Square }
-  | { type: "RESET_BRANCH" };
-
-const initialContext: ChessLabContext = {
+  | { type: "LOAD_GAME"; maxPly: number; ply?: number }
+  | { type: "PRACTICE"; lessonIndex?: number; restart?: boolean; lessonIds?: string[] }
+  | { type: "SUBMIT_ANSWER" | "REVEAL"; answer: SubmittedAnswer }
+  | { type: "EXPLORE"; fen: string; label?: string }
+  | ({ type: "BRANCH_MOVE" } & BranchMove)
+  | { type: "TAKEAWAY"; value: string };
+const initial: ChessLabContext = {
   currentPly: 0,
   maxPly: 30,
   lessonIndex: 0,
   submittedAnswer: null,
+  run: null,
   branchStartFen: "",
+  branchStartLabel: "Starting position",
   branchFen: "",
   branchMoves: [],
   branchLastMove: null,
 };
-
+function updateRun(
+  context: ChessLabContext,
+  patch: Partial<PracticeRun>,
+  progressPatch?: Partial<PracticeRun["progress"][string]>,
+) {
+  const run = context.run ?? createPracticeRun();
+  const id = run.lessonIds[run.cursor];
+  return {
+    ...run,
+    ...patch,
+    progress: progressPatch
+      ? { ...run.progress, [id]: { ...run.progress[id], ...progressPatch } }
+      : run.progress,
+  };
+}
+function advance(context: ChessLabContext, skip = false) {
+  const run = updateRun(context, {}, skip ? { outcome: "skipped" } : undefined);
+  if (run.cursor === run.lessonIds.length - 1)
+    return {
+      run: { ...run, phase: "summary" as const, takeaway: run.takeaway || practiceHabit(run) },
+      submittedAnswer: null,
+    };
+  const cursor = run.cursor + 1;
+  return {
+    run: { ...run, cursor, phase: "answering" as const },
+    lessonIndex: jovaniStudy.lessons.findIndex((l) => l.id === run.lessonIds[cursor]),
+    submittedAnswer: null,
+  };
+}
 export const chessLabMachine = setup({
-  types: {
-    context: {} as ChessLabContext,
-    events: {} as ChessLabEvent,
-  },
-  guards: {
-    canAdvance: ({ context }) => context.currentPly < context.maxPly,
-    hasNextLesson: ({ context }) => context.lessonIndex < jovaniStudy.lessons.length - 1,
-  },
+  types: { context: {} as ChessLabContext, events: {} as ChessLabEvent },
+  guards: { canAdvance: ({ context }) => context.currentPly < context.maxPly },
   actions: {
     next: assign(({ context }) => ({
       currentPly: Math.min(context.currentPly + 1, context.maxPly),
     })),
-    previous: assign(({ context }) => ({
-      currentPly: Math.max(context.currentPly - 1, 0),
-    })),
+    prev: assign(({ context }) => ({ currentPly: Math.max(0, context.currentPly - 1) })),
     seek: assign(({ context, event }) =>
       event.type === "SEEK" ? { currentPly: Math.max(0, Math.min(event.ply, context.maxPly)) } : {},
     ),
-    loadGame: assign(({ event }) =>
+    load: assign(({ event }) =>
       event.type === "LOAD_GAME"
         ? {
-            currentPly: 0,
+            currentPly: Math.min(event.ply ?? 0, event.maxPly),
             maxPly: event.maxPly,
-            lessonIndex: 0,
-            submittedAnswer: null,
-            branchStartFen: "",
-            branchFen: "",
             branchMoves: [],
+            branchFen: "",
+            branchStartFen: "",
             branchLastMove: null,
           }
         : {},
     ),
-    startPractice: assign(({ context, event }) => {
-      const requestedIndex = event.type === "PRACTICE" ? event.lessonIndex : undefined;
-      const lessonIndex = Math.max(
-        0,
-        Math.min(requestedIndex ?? context.lessonIndex, jovaniStudy.lessons.length - 1),
-      );
+    practice: assign(({ context, event }) => {
+      if (event.type !== "PRACTICE") return {};
+      const run = event.restart || !context.run ? createPracticeRun(event.lessonIds) : context.run;
+      if (event.lessonIndex !== undefined) {
+        const id = jovaniStudy.lessons[event.lessonIndex].id;
+        const cursor = run.lessonIds.indexOf(id);
+        if (cursor >= 0)
+          return {
+            run: { ...run, cursor, phase: "answering" as const },
+            lessonIndex: event.lessonIndex,
+            submittedAnswer: null,
+          };
+      }
+      const lessonIndex = jovaniStudy.lessons.findIndex((l) => l.id === run.lessonIds[run.cursor]);
+      const attempts = run.progress[run.lessonIds[run.cursor]].attempts;
       return {
+        run,
         lessonIndex,
-        currentPly: jovaniStudy.lessons[lessonIndex].setupPly,
-        submittedAnswer: null,
+        submittedAnswer:
+          run.phase === "incorrect" || run.phase === "solved" ? (attempts.at(-1) ?? null) : null,
       };
     }),
-    submitAnswer: assign(({ event }) =>
-      event.type === "SUBMIT_ANSWER" ? { submittedAnswer: event.answer } : {},
+    answer: assign(({ context, event }) => {
+      if (event.type !== "SUBMIT_ANSWER" || context.run?.phase !== "answering") return {};
+      const progress = context.run.progress[context.run.lessonIds[context.run.cursor]];
+      return {
+        submittedAnswer: event.answer,
+        run: updateRun(
+          context,
+          { phase: event.answer.correct ? "solved" : "incorrect" },
+          {
+            attempts: [...progress.attempts, event.answer],
+            outcome: event.answer.correct ? "solved" : "pending",
+          },
+        ),
+      };
+    }),
+    reveal: assign(({ context, event }) =>
+      event.type === "REVEAL"
+        ? {
+            submittedAnswer: event.answer,
+            run: updateRun(context, { phase: "revealed" }, { outcome: "revealed" }),
+          }
+        : {},
     ),
-    nextLesson: assign(({ context }) => {
-      const lessonIndex = Math.min(context.lessonIndex + 1, jovaniStudy.lessons.length - 1);
-      return {
-        lessonIndex,
-        currentPly: jovaniStudy.lessons[lessonIndex].setupPly,
-        submittedAnswer: null,
-      };
-    }),
-    startExplore: assign(({ event }) =>
+    retry: assign(({ context }) => ({
+      submittedAnswer: null,
+      run: updateRun(context, { phase: "answering" }),
+    })),
+    hint: assign(({ context }) => ({ run: updateRun(context, {}, { hintUsed: true }) })),
+    advance: assign(({ context }) => advance(context)),
+    skip: assign(({ context }) => advance(context, true)),
+    takeaway: assign(({ context, event }) =>
+      event.type === "TAKEAWAY" ? { run: updateRun(context, { takeaway: event.value }) } : {},
+    ),
+    explore: assign(({ event }) =>
       event.type === "EXPLORE"
         ? {
             branchStartFen: event.fen,
+            branchStartLabel: event.label ?? "Starting position",
             branchFen: event.fen,
             branchMoves: [],
             branchLastMove: null,
-            submittedAnswer: null,
           }
         : {},
     ),
-    addBranchMove: assign(({ context, event }) =>
+    branch: assign(({ context, event }) =>
       event.type === "BRANCH_MOVE"
         ? {
+            branchMoves: [...context.branchMoves, event],
             branchFen: event.fen,
-            branchMoves: [...context.branchMoves, event.san],
             branchLastMove: { from: event.from, to: event.to },
           }
         : {},
     ),
-    resetBranch: assign(({ context }) => ({
+    undo: assign(({ context }) => {
+      const moves = context.branchMoves.slice(0, -1);
+      const last = moves.at(-1);
+      return {
+        branchMoves: moves,
+        branchFen: last?.fen ?? context.branchStartFen,
+        branchLastMove: last ? { from: last.from, to: last.to } : null,
+      };
+    }),
+    reset: assign(({ context }) => ({
+      branchMoves: [],
       branchFen: context.branchStartFen,
-      branchMoves: [],
-      branchLastMove: null,
-    })),
-    clearInteraction: assign(() => ({
-      submittedAnswer: null,
-      branchMoves: [],
       branchLastMove: null,
     })),
   },
 }).createMachine({
   id: "chessLab",
   initial: "review",
-  context: initialContext,
+  context: initial,
   on: {
-    LOAD_GAME: { target: ".review", actions: "loadGame" },
-    REVIEW: { target: ".review", actions: "clearInteraction" },
-    PRACTICE: { target: ".practice", actions: "startPractice" },
-    EXPLORE: { target: ".explore", actions: "startExplore" },
+    LOAD_GAME: { target: ".review", actions: "load" },
+    REVIEW: { target: ".review" },
+    PRACTICE: { target: ".practice", actions: "practice" },
+    EXPLORE: { target: ".explore", actions: "explore" },
+    TAKEAWAY: { actions: "takeaway" },
   },
   states: {
     review: {
       on: {
         NEXT: { actions: "next" },
-        PREV: { actions: "previous" },
+        PREV: { actions: "prev" },
         SEEK: { actions: "seek" },
         PLAY: { target: "playing" },
       },
@@ -153,28 +218,24 @@ export const chessLabMachine = setup({
           { target: "review" },
         ],
       },
-      on: {
-        PAUSE: { target: "review" },
-        SEEK: { target: "review", actions: "seek" },
-      },
+      on: { PAUSE: { target: "review" }, SEEK: { target: "review", actions: "seek" } },
     },
     practice: {
       on: {
-        SUBMIT_ANSWER: { target: "feedback", actions: "submitAnswer" },
-      },
-    },
-    feedback: {
-      on: {
-        NEXT_LESSON: [
-          { guard: "hasNextLesson", target: "practice", actions: "nextLesson" },
-          { target: "review", actions: "clearInteraction" },
-        ],
+        SUBMIT_ANSWER: { actions: "answer" },
+        RETRY: { actions: "retry" },
+        REVEAL: { actions: "reveal" },
+        HINT: { actions: "hint" },
+        NEXT_LESSON: { actions: "advance" },
+        SKIP: { actions: "skip" },
       },
     },
     explore: {
       on: {
-        BRANCH_MOVE: { actions: "addBranchMove" },
-        RESET_BRANCH: { actions: "resetBranch" },
+        EXPLORE: {},
+        BRANCH_MOVE: { actions: "branch" },
+        UNDO_BRANCH: { actions: "undo" },
+        RESET_BRANCH: { actions: "reset" },
       },
     },
   },
