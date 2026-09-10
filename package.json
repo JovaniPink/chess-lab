@@ -93,7 +93,7 @@
     "typescript": "6.0.3",
     "vinext": "1.0.0-beta.6",
     "vite": "8.2.1",
-    "vitest": "4.1.10"
+    "vitest": "4.1.11"
   },
   "overrides": {
     "sharp": "0.35.3"
