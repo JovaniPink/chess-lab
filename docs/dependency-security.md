@@ -22,6 +22,6 @@ The full audit reports exactly three high-severity package paths: `@netlify/dev`
 `GHSA-jmr9-qjv8-65gv`; no other finding is accepted. `browserslist` is locked at a fixed version
 within its declared transitive range.
 
-`sharp@0.35.3` is enforced through npm overrides because Netlify Images 2.0.1 still installs IPX 3.1.1 with a `^0.34.3` range. The canonical tests and packaged Netlify artifact tests validate the override; remove it after Netlify Images adopts IPX 4 or another fixed Sharp range.
+`sharp@0.35.4` is enforced through npm overrides because Netlify Images 2.0.1 still installs IPX 3.1.1 with a `^0.34.3` range. The canonical tests and packaged Netlify artifact tests validate the override; remove it after Netlify Images adopts IPX 4 or another fixed Sharp range.
 
 Recheck the remaining exception no later than 2026-09-15, and earlier whenever Netlify CLI, `@netlify/dev`, `@netlify/functions-dev`, or the npm advisory report changes.
