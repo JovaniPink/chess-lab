@@ -1,6 +1,6 @@
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { ChessLab } from "./chess-lab";
 const pgn = '[White "Player A"]\n[Black "Player B"]\n[Result "*"]\n\n1. e4 e5 2. Nf3 Nc6 *';
 async function importGame(user: ReturnType<typeof userEvent.setup>, value = pgn) {
@@ -253,6 +253,26 @@ describe("ChessLab learning journeys", () => {
     expect(
       within(screen.getByRole("region", { name: "Linked game reviews" })).getAllByRole("article"),
     ).toHaveLength(1);
+  });
+  it("reopens a linked review at the ply where autoplay stopped", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+      render(<ChessLab />);
+      await importGame(user);
+      await fillReview(user);
+      await user.click(screen.getByRole("button", { name: "Complete session review" }));
+      fireEvent.change(screen.getByRole("slider"), { target: { value: "0" } });
+      await user.click(screen.getByRole("button", { name: "Play replay" }));
+      await act(() => vi.advanceTimersByTimeAsync(5000));
+      expect(screen.getByRole("button", { name: "Play replay" })).toBeVisible();
+      expect(screen.getByRole("slider")).toHaveValue("4");
+      await user.click(screen.getByRole("button", { name: "Training plan" }));
+      await user.click(screen.getByRole("button", { name: "Open game review" }));
+      expect(screen.getByRole("slider")).toHaveValue("4");
+    } finally {
+      vi.useRealTimers();
+    }
   });
   it("restores custom-FEN promotion positions with original move numbering", async () => {
     const user = userEvent.setup();

@@ -188,10 +188,8 @@ export function ChessLab() {
     focusWorkspace();
   }
   function openWeek(week = selectedWeek) {
-    if (state.matches("playing")) {
-      send({ type: "PAUSE" });
-      savePly(currentPly);
-    }
+    if (state.matches("playing")) send({ type: "PAUSE" });
+    savePly(currentPly);
     setSelectedWeek(week);
     setTraining(true);
     focusWorkspace();
