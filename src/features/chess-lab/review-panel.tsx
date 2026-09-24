@@ -1,141 +1,65 @@
 "use client";
-
-import { BookOpen, ChevronRight, Target, Zap } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { useEffect, useRef } from "react";
 import { jovaniStudy } from "@/content/jovani-study";
-import { cn } from "@/lib/utils";
-import type { MoveRecord } from "@/types/chess";
-import { ImportedGameReviewFlow, type ImportedGameReview } from "./imported-game-review";
-
-type ReviewPanelProps = {
-  moves: MoveRecord[];
-  currentPly: number;
-  currentPositionLabel: string;
-  isOriginal: boolean;
-  canMarkPosition: boolean;
-  selectedTrainingWeek: number;
-  importedReview: ImportedGameReview;
-  onSeek: (ply: number) => void;
-  onPractice: (lessonIndex: number) => void;
-  onImportedReviewChange: (review: ImportedGameReview) => void;
-  onImportedReviewComplete: (review: ImportedGameReview) => void;
-  onOpenTrainingWeek: (weekNumber: number) => void;
-};
-
+import { formatMoveLabel } from "@/lib/chess";
+import type { ParsedGame } from "@/types/chess";
+import { Button } from "@/components/ui/button";
 export function ReviewPanel({
-  moves,
+  game,
   currentPly,
-  currentPositionLabel,
   isOriginal,
-  canMarkPosition,
-  selectedTrainingWeek,
-  importedReview,
   onSeek,
   onPractice,
-  onImportedReviewChange,
-  onImportedReviewComplete,
-  onOpenTrainingWeek,
-}: ReviewPanelProps) {
-  const rows = Array.from({ length: Math.ceil(moves.length / 2) }, (_, index) => ({
-    white: moves[index * 2],
-    black: moves[index * 2 + 1],
-    number: index + 1,
-  }));
-  const activeLesson = jovaniStudy.lessons.findIndex(
-    (lesson) => Math.abs(lesson.setupPly - currentPly) <= 1,
-  );
-
+}: {
+  game: ParsedGame;
+  currentPly: number;
+  isOriginal: boolean;
+  onSeek: (ply: number) => void;
+  onPractice: (index: number) => void;
+}) {
+  const table = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = table.current;
+    const current = el?.querySelector<HTMLElement>('[aria-current="step"]');
+    if (!el || !current) return;
+    const y = current.offsetTop - el.offsetTop;
+    if (y < el.scrollTop) el.scrollTop = y;
+    else if (y + current.offsetHeight > el.scrollTop + el.clientHeight)
+      el.scrollTop = y + current.offsetHeight - el.clientHeight;
+  }, [currentPly]);
   return (
-    <>
-      <div className="panel-heading">
-        <div>
-          <p className="eyebrow">
-            <BookOpen size={14} /> {isOriginal ? "Annotated review" : "Game replay"}
-          </p>
-          <h2>{isOriginal ? "How the position collapsed" : "Imported move list"}</h2>
-        </div>
-        <span className="move-count">{Math.ceil(moves.length / 2)} moves</span>
-      </div>
-
-      {isOriginal && (
-        <div className="diagnosis-banner">
-          <div className="diagnosis-icon">
-            <Zap size={18} />
-          </div>
-          <div>
-            <strong>Primary diagnosis</strong>
-            <p>Development debt → loose piece → opened diagonal → forced mate.</p>
-          </div>
-        </div>
-      )}
-
-      <div className="move-table" aria-label="Game moves">
-        {rows.map((row) => (
-          <div className="move-row" key={row.number}>
-            <span className="move-number">{row.number}</span>
-            <button
-              type="button"
-              className={cn(currentPly === row.number * 2 - 1 && "current")}
-              onClick={() => onSeek(row.number * 2 - 1)}
-              aria-label={`Go to ${row.number}. ${row.white?.san}`}
-            >
-              {row.white?.san}
-            </button>
-            <button
-              type="button"
-              className={cn(currentPly === row.number * 2 && "current")}
-              onClick={() => row.black && onSeek(row.number * 2)}
-              disabled={!row.black}
-              aria-label={row.black ? `Go to ${row.number}... ${row.black.san}` : undefined}
-            >
-              {row.black?.san}
-            </button>
-          </div>
+    <section className="review-panel-content" aria-label="Game review">
+      <h2>{isOriginal ? "How the position collapsed" : "Imported move list"}</h2>
+      {isOriginal && <p>{jovaniStudy.headline}</p>}
+      <div ref={table} className="move-table" aria-label="Game moves">
+        {game.moves.map((move, index) => (
+          <button
+            key={index}
+            type="button"
+            aria-current={index + 1 === currentPly ? "step" : undefined}
+            aria-label={`Go to ${formatMoveLabel(index, move, game.initialFen)}`}
+            onClick={() => onSeek(index + 1)}
+          >
+            {formatMoveLabel(index, move, game.initialFen)}
+          </button>
         ))}
       </div>
-
       {isOriginal && (
-        <div className="moments-list">
-          <div className="section-label">
-            <span>Critical moments</span>
-            <span>{jovaniStudy.lessons.length}</span>
-          </div>
+        <details className="moments-list">
+          <summary>Critical moments · {jovaniStudy.lessons.length}</summary>
           {jovaniStudy.lessons.map((lesson, index) => (
-            <button
-              type="button"
-              key={lesson.id}
-              className={cn("moment-item", activeLesson === index && "active")}
-              onClick={() => onSeek(lesson.setupPly)}
-            >
-              <span className={cn("moment-dot", lesson.severity)} />
-              <div>
-                <strong>
-                  {lesson.moveLabel} · {lesson.title}
-                </strong>
-                <span>{lesson.insight}</span>
-              </div>
-              <ChevronRight size={17} />
-            </button>
+            <article key={lesson.id}>
+              <Button tone="ghost" onClick={() => onSeek(lesson.setupPly)}>
+                Position before {lesson.moveLabel}
+              </Button>
+              <p>{lesson.insight}</p>
+              <Button tone="secondary" onClick={() => onPractice(index)}>
+                Practice this position
+              </Button>
+            </article>
           ))}
-          <Button tone="primary" onClick={() => onPractice(Math.max(0, activeLesson))}>
-            <Target size={16} /> Practice these positions
-          </Button>
-        </div>
+        </details>
       )}
-
-      {!isOriginal && (
-        <ImportedGameReviewFlow
-          review={importedReview}
-          currentPly={currentPly}
-          currentPositionLabel={currentPositionLabel}
-          canMarkPosition={canMarkPosition}
-          selectedTrainingWeek={selectedTrainingWeek}
-          onChange={onImportedReviewChange}
-          onComplete={onImportedReviewComplete}
-          onOpenTrainingWeek={onOpenTrainingWeek}
-          onSeek={onSeek}
-        />
-      )}
-    </>
+    </section>
   );
 }

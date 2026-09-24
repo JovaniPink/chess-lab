@@ -20,7 +20,7 @@ export function PgnImportDialog({ open, defaultPgn, onClose, onLoad }: PgnImport
   const dialogRef = useRef<HTMLDialogElement>(null);
   const form = useForm<PgnImportValues>({
     resolver: zodResolver(pgnImportSchema),
-    defaultValues: { pgn: defaultPgn },
+    defaultValues: { pgn: "" },
   });
 
   useEffect(() => {
@@ -28,12 +28,11 @@ export function PgnImportDialog({ open, defaultPgn, onClose, onLoad }: PgnImport
     if (!dialog) return;
 
     if (open && !dialog.open) {
-      form.reset({ pgn: defaultPgn });
       dialog.showModal();
     } else if (!open && dialog.open) {
       dialog.close();
     }
-  }, [defaultPgn, form, open]);
+  }, [open]);
 
   function submit(values: PgnImportValues) {
     onLoad(parsePgn(values.pgn));
@@ -58,17 +57,28 @@ export function PgnImportDialog({ open, defaultPgn, onClose, onLoad }: PgnImport
         <Upload size={21} />
       </div>
       <p className="eyebrow">Bring another game</p>
-      <h2 id="pgn-dialog-title">Load a PGN to replay</h2>
+      <h2 id="pgn-dialog-title">Review your game</h2>
       <p id="pgn-dialog-description">
         Player names, result, and moves are validated before the game reaches the board. Imported
         games stay only in this open tab and support legal replay, human-first review, and free
         exploration.
       </p>
       <form onSubmit={form.handleSubmit(submit)}>
-        <label htmlFor="pgn-input">PGN notation</label>
-        <textarea id="pgn-input" {...form.register("pgn")} rows={10} autoFocus />
+        <label htmlFor="pgn-input">Paste game notation</label>
+        <p>PGN is the text notation of a chess game. Paste it below to begin your own review.</p>
+        <Button tone="secondary" onClick={() => form.setValue("pgn", defaultPgn)}>
+          Use example game
+        </Button>
+        <textarea
+          aria-invalid={Boolean(form.formState.errors.pgn)}
+          aria-describedby={form.formState.errors.pgn ? "pgn-error" : "pgn-dialog-description"}
+          id="pgn-input"
+          {...form.register("pgn")}
+          rows={10}
+          autoFocus
+        />
         {form.formState.errors.pgn && (
-          <p className="form-error" role="alert">
+          <p id="pgn-error" className="form-error" role="alert">
             <CircleAlert size={14} /> {form.formState.errors.pgn.message}
           </p>
         )}

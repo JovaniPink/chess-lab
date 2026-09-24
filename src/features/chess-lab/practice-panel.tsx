@@ -1,109 +1,97 @@
 "use client";
-
-import { Check, ChevronRight, Lightbulb, ShieldAlert, Target } from "lucide-react";
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 import type { CandidateMove, Lesson, SubmittedAnswer } from "@/types/chess";
-
-type PracticePanelProps = {
-  lesson: Lesson;
-  lessonIndex: number;
-  lessonCount: number;
-  submittedAnswer: SubmittedAnswer | null;
-  onCandidate: (candidate: CandidateMove) => void;
-  onNext: () => void;
-};
-
+import type { PracticeRun } from "./practice-run";
 export function PracticePanel({
   lesson,
-  lessonIndex,
-  lessonCount,
-  submittedAnswer,
+  run,
+  answer,
   onCandidate,
-  onNext,
-}: PracticePanelProps) {
-  const [showHint, setShowHint] = useState(false);
-  const chosenCandidate = submittedAnswer
-    ? lesson.candidates.find((candidate) => candidate.san === submittedAnswer.san)
-    : undefined;
-
+  onHint,
+  onRetry,
+  onReveal,
+  onSkip,
+  onContinue,
+}: {
+  lesson: Lesson;
+  run: PracticeRun;
+  answer: SubmittedAnswer | null;
+  onCandidate: (c: CandidateMove) => void;
+  onHint: () => void;
+  onRetry: () => void;
+  onReveal: () => void;
+  onSkip: () => void;
+  onContinue: () => void;
+}) {
+  const progress = run.progress[lesson.id];
+  const unlocked = run.phase === "answering";
+  const showSolution = run.phase === "solved" || run.phase === "revealed";
+  const candidate = lesson.candidates.find((c) => c.san === answer?.san);
   return (
     <div className="practice-panel">
-      <div className="panel-heading">
-        <div>
-          <p className="eyebrow">
-            <Target size={14} /> Lesson {lessonIndex + 1} of {lessonCount}
-          </p>
-          <h2>{lesson.title}</h2>
-        </div>
-        <span className={cn("severity", lesson.severity)}>{lesson.moveLabel}</span>
-      </div>
-
-      <div className="progress-steps" aria-label={`Lesson ${lessonIndex + 1} of ${lessonCount}`}>
-        {Array.from({ length: lessonCount }, (_, index) => (
-          <span key={index} className={cn(index <= lessonIndex && "done")} />
+      <div className="answer-list">
+        {lesson.candidates.map((c) => (
+          <button
+            type="button"
+            key={c.san}
+            aria-disabled={!unlocked}
+            onClick={() => unlocked && onCandidate(c)}
+            className={`answer-option ${showSolution && c.correct ? "correct-answer" : ""}`}
+          >
+            <strong>{c.san}</strong>{" "}
+            <span>{showSolution ? c.explanation : "Choose this move"}</span>
+          </button>
         ))}
       </div>
-
-      <p className="practice-prompt">{lesson.prompt}</p>
-      <p className="practice-instruction">Make a legal move on the board or choose a candidate.</p>
-
-      <div className="answer-list">
-        {lesson.candidates.map((candidate) => {
-          const selected = submittedAnswer?.san === candidate.san;
-          return (
-            <button
-              key={candidate.san}
-              type="button"
-              onClick={() => onCandidate(candidate)}
-              disabled={Boolean(submittedAnswer)}
-              className={cn(
-                "answer-option",
-                submittedAnswer && candidate.correct && "correct-answer",
-                submittedAnswer && selected && !candidate.correct && "selected-wrong-answer",
-                submittedAnswer && !selected && !candidate.correct && "muted-answer",
-              )}
-              aria-pressed={selected}
-            >
-              <strong>{candidate.san}</strong>
-              <span>{submittedAnswer ? candidate.explanation : "Choose this move"}</span>
-              {submittedAnswer && candidate.correct && <Check size={18} aria-hidden="true" />}
-            </button>
-          );
-        })}
-      </div>
-
-      {!submittedAnswer && (
-        <button
-          type="button"
-          className="hint-button"
-          onClick={() => setShowHint((value) => !value)}
-        >
-          <Lightbulb size={16} /> {showHint ? "Hide hint" : "Give me a hint"}
-        </button>
+      {unlocked && (
+        <div className="action-row">
+          <Button tone="ghost" onClick={onHint}>
+            Give me a hint
+          </Button>
+          <Button tone="ghost" onClick={onReveal}>
+            Show coached move
+          </Button>
+          <Button tone="ghost" onClick={onSkip}>
+            Skip position
+          </Button>
+        </div>
       )}
-      {showHint && !submittedAnswer && <p className="hint-copy">{lesson.hint}</p>}
-
-      {submittedAnswer && (
-        <div className={cn("feedback-box", submittedAnswer.correct ? "correct" : "incorrect")}>
-          {submittedAnswer.correct ? <Check size={18} /> : <ShieldAlert size={18} />}
+      {progress.hintUsed && unlocked && <p className="hint-copy">{lesson.hint}</p>}
+      {run.phase === "incorrect" && (
+        <div className="feedback-box incorrect" role="status">
           <div>
-            <strong>{submittedAnswer.correct ? "Exactly." : "Look one layer deeper."}</strong>
+            <h3>Try another idea</h3>
             <p>
-              {chosenCandidate?.explanation ??
-                `The legal move ${submittedAnswer.san} does not address this lesson's decision point.`}
+              {candidate?.explanation ??
+                `The legal move ${answer?.san} is outside this lesson’s coached line. This is not an engine evaluation.`}
             </p>
-            <p>{lesson.insight}</p>
+            <div className="action-row">
+              <Button tone="primary" onClick={onRetry}>
+                Try again
+              </Button>
+              <Button tone="secondary" onClick={onReveal}>
+                Show coached move
+              </Button>
+              <Button tone="ghost" onClick={onSkip}>
+                Skip position
+              </Button>
+            </div>
           </div>
         </div>
       )}
-
-      {submittedAnswer && (
-        <Button tone="primary" onClick={onNext}>
-          {lessonIndex === lessonCount - 1 ? "Return to review" : "Next lesson"}
-          <ChevronRight size={17} />
-        </Button>
+      {showSolution && (
+        <div className="feedback-box correct" role="status">
+          <div>
+            <h3>{run.phase === "solved" ? "Coached move found" : "Coached move revealed"}</h3>
+            <p>
+              {lesson.correctSan}: {lesson.candidates.find((c) => c.correct)?.explanation}
+            </p>
+            <p>{lesson.insight}</p>
+            <Button tone="primary" onClick={onContinue}>
+              Continue
+            </Button>
+          </div>
+        </div>
       )}
     </div>
   );

@@ -1,8 +1,7 @@
 "use client";
 
-import { BrainCircuit, Check, Dumbbell, MapPin, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import type { ReviewStage } from "./session-game";
 
 const errorCategories = [
   "Threat blindness",
@@ -55,278 +54,218 @@ export function createEmptyImportedGameReview(): ImportedGameReview {
   };
 }
 
-type ImportedGameReviewProps = {
+export function reviewRequirements(review: ImportedGameReview) {
+  return [
+    {
+      label: "Record first impressions",
+      stage: "thoughts" as const,
+      done: !!review.postGameThoughts.trim(),
+    },
+    {
+      label: "Mark a critical position",
+      stage: "positions" as const,
+      done: review.criticalPositions.length > 0,
+    },
+    {
+      label: "Choose an error category",
+      stage: "diagnosis" as const,
+      done: !!review.errorCategory,
+    },
+    {
+      label: "Record a corrective drill",
+      stage: "diagnosis" as const,
+      done: !!review.correctiveDrill.trim(),
+    },
+  ];
+}
+type Props = {
   review: ImportedGameReview;
-  currentPly: number;
-  currentPositionLabel: string;
-  canMarkPosition: boolean;
-  selectedTrainingWeek: number;
-  onChange: (review: ImportedGameReview) => void;
-  onComplete: (review: ImportedGameReview) => void;
-  onOpenTrainingWeek: (weekNumber: number) => void;
+  stage: ReviewStage;
+  week: number;
+  onStage: (s: ReviewStage) => void;
+  onWeek: (n: number) => void;
+  onChange: (r: ImportedGameReview) => void;
   onSeek: (ply: number) => void;
+  onComplete: () => void;
+  onOpenWeek: () => void;
 };
-
 export function ImportedGameReviewFlow({
   review,
-  currentPly,
-  currentPositionLabel,
-  canMarkPosition,
-  selectedTrainingWeek,
+  stage,
+  week,
+  onStage,
+  onWeek,
   onChange,
-  onComplete,
-  onOpenTrainingWeek,
   onSeek,
-}: ImportedGameReviewProps) {
-  const currentPositionIsMarked = review.criticalPositions.some(
-    (position) => position.ply === currentPly,
-  );
-  const hasMemoryCapture = review.postGameThoughts.trim().length > 0;
-  const hasCriticalPosition = review.criticalPositions.length > 0;
-  const hasErrorCategory = review.errorCategory !== "";
-  const hasCorrectiveDrill = review.correctiveDrill.trim().length > 0;
-  const canComplete =
-    hasMemoryCapture && hasCriticalPosition && hasErrorCategory && hasCorrectiveDrill;
-
+  onComplete,
+  onOpenWeek,
+}: Props) {
   function update(patch: Partial<ImportedGameReview>) {
     onChange({ ...review, ...patch, completed: false });
   }
-
-  function markCurrentPosition() {
-    if (!canMarkPosition || currentPositionIsMarked || review.criticalPositions.length >= 3) {
-      return;
-    }
-
-    update({
-      criticalPositions: [
-        ...review.criticalPositions,
-        { ply: currentPly, label: currentPositionLabel, note: "" },
-      ].sort((left, right) => left.ply - right.ply),
-    });
-  }
-
-  function updateCriticalNote(ply: number, note: string) {
-    update({
-      criticalPositions: review.criticalPositions.map((position) =>
-        position.ply === ply ? { ...position, note } : position,
-      ),
-    });
-  }
-
-  function removeCriticalPosition(ply: number) {
-    update({
-      criticalPositions: review.criticalPositions.filter((position) => position.ply !== ply),
-    });
-  }
-
-  const markButtonLabel = !canMarkPosition
-    ? "Return to review to mark a position"
-    : currentPositionIsMarked
-      ? "Position marked"
-      : review.criticalPositions.length >= 3
-        ? "Three positions marked"
-        : "Mark current position";
-
+  const steps: [ReviewStage, string][] = [
+    ["thoughts", "First impressions"],
+    ["positions", "Positions"],
+    ["diagnosis", "Diagnosis and drill"],
+    ["complete", "Complete"],
+  ];
+  const missing = reviewRequirements(review).filter((r) => !r.done);
   return (
-    <section className="human-review" aria-labelledby="human-review-title">
-      <div className="human-review-intro">
-        <div className="human-review-icon" aria-hidden="true">
-          <BrainCircuit size={18} />
-        </div>
-        <div>
-          <p className="eyebrow">Human-first review</p>
-          <h3 id="human-review-title">Remember first. Diagnose second.</h3>
-          <p>
-            Work from your own memory before consulting outside analysis. These notes stay only in
-            this open tab and disappear when the session ends.
-          </p>
-        </div>
-      </div>
-
-      <ol className="review-progress" aria-label="Review progress">
-        <ProgressItem complete={hasMemoryCapture}>Thoughts</ProgressItem>
-        <ProgressItem complete={hasCriticalPosition}>Positions</ProgressItem>
-        <ProgressItem complete={hasErrorCategory}>Error</ProgressItem>
-        <ProgressItem complete={hasCorrectiveDrill}>Drill</ProgressItem>
-      </ol>
-
-      <div className="review-step">
-        <div className="review-step-heading">
-          <span>1</span>
-          <div>
-            <strong>Immediate post-game capture</strong>
-            <p>Write what you remember before the move list changes the story.</p>
-          </div>
-        </div>
-        <label htmlFor="post-game-thoughts">Immediate post-game thoughts</label>
-        <textarea
-          id="post-game-thoughts"
-          rows={4}
-          value={review.postGameThoughts}
-          onChange={(event) => update({ postGameThoughts: event.target.value })}
-          placeholder="Where did you feel uncertain? What did you calculate? When did your evaluation or emotional state change?"
-        />
-        <label htmlFor="suspected-mistake">Suspected first important mistake</label>
-        <input
-          id="suspected-mistake"
-          type="text"
-          value={review.suspectedMistake}
-          onChange={(event) => update({ suspectedMistake: event.target.value })}
-          placeholder="A move, decision, or moment you want to revisit"
-        />
-      </div>
-
-      <div className="review-step">
-        <div className="review-step-heading">
-          <span>2</span>
-          <div>
-            <strong>Mark critical positions</strong>
-            <p>Stop the legal replay at up to three decisions worth revisiting.</p>
-          </div>
-        </div>
-        <div className="current-position-marker">
-          <div>
-            <span>Board position</span>
-            <strong>{currentPositionLabel}</strong>
-          </div>
-          <Button
-            tone="secondary"
-            size="sm"
-            onClick={markCurrentPosition}
-            disabled={
-              !canMarkPosition || currentPositionIsMarked || review.criticalPositions.length >= 3
-            }
+    <section className="imported-review-flow" aria-label="Personal game review">
+      <nav className="review-progress" aria-label="Review progress">
+        {steps.map(([id, label]) => (
+          <button
+            type="button"
+            key={id}
+            aria-current={stage === id ? "step" : undefined}
+            onClick={() => onStage(id)}
           >
-            <MapPin size={14} /> {markButtonLabel}
-          </Button>
+            {label}
+          </button>
+        ))}
+      </nav>
+      {stage === "thoughts" && (
+        <div className="review-step">
+          <h2>Remember first. Diagnose second.</h2>
+          <p>
+            Write what you remember before replay changes the story. You can skip now and return
+            before completing the review.
+          </p>
+          <label htmlFor="post-game-thoughts">Immediate post-game thoughts</label>
+          <textarea
+            id="post-game-thoughts"
+            value={review.postGameThoughts}
+            onChange={(e) => update({ postGameThoughts: e.target.value })}
+            rows={4}
+          />
+          <label htmlFor="suspected-mistake">Suspected first important mistake (optional)</label>
+          <input
+            id="suspected-mistake"
+            value={review.suspectedMistake}
+            onChange={(e) => update({ suspectedMistake: e.target.value })}
+          />
+          <div className="action-row">
+            <Button tone="primary" onClick={() => onStage("positions")}>
+              Continue to replay
+            </Button>
+            <Button tone="ghost" onClick={() => onStage("positions")}>
+              Skip for now
+            </Button>
+          </div>
         </div>
-
-        {review.criticalPositions.length > 0 && (
-          <div className="critical-position-list" aria-label="Marked critical positions">
-            {review.criticalPositions.map((position, index) => (
-              <article key={position.ply} className="critical-position-card">
-                <div className="critical-position-title">
-                  <button
-                    type="button"
-                    onClick={() => onSeek(position.ply)}
-                    aria-label={`Return to ${position.label}`}
-                  >
-                    <span>Critical {index + 1}</span>
-                    <strong>{position.label}</strong>
-                  </button>
-                  <button
-                    type="button"
-                    className="remove-critical-position"
-                    onClick={() => removeCriticalPosition(position.ply)}
-                    aria-label={`Remove ${position.label} from critical positions`}
-                  >
-                    <Trash2 size={14} />
-                  </button>
-                </div>
-                <label htmlFor={`critical-note-${position.ply}`}>
-                  Why was this position critical?
+      )}
+      {stage === "positions" && (
+        <div className="review-step">
+          <h2>Mark critical positions</h2>
+          <p>
+            Use replay and Mark position beside the board. Choose up to three decisions worth
+            revisiting.
+          </p>
+          <div aria-label="Marked critical positions">
+            {review.criticalPositions.map((p) => (
+              <article className="critical-position-card" key={p.ply}>
+                <Button tone="secondary" onClick={() => onSeek(p.ply)}>
+                  Return to {p.label}
+                </Button>
+                <Button
+                  tone="ghost"
+                  aria-label={`Remove ${p.label} from critical positions`}
+                  onClick={() =>
+                    update({
+                      criticalPositions: review.criticalPositions.filter((c) => c.ply !== p.ply),
+                    })
+                  }
+                >
+                  Remove
+                </Button>
+                <label htmlFor={`position-${p.ply}`}>
+                  Why was this position critical? (optional)
                 </label>
-                <input
-                  id={`critical-note-${position.ply}`}
-                  type="text"
-                  value={position.note}
-                  onChange={(event) => updateCriticalNote(position.ply, event.target.value)}
-                  placeholder="The threat, candidate, or evaluation that changed"
+                <textarea
+                  id={`position-${p.ply}`}
+                  value={p.note}
+                  onChange={(e) =>
+                    update({
+                      criticalPositions: review.criticalPositions.map((c) =>
+                        c.ply === p.ply ? { ...c, note: e.target.value } : c,
+                      ),
+                    })
+                  }
                 />
               </article>
             ))}
           </div>
-        )}
-      </div>
-
-      <div className="review-step">
-        <div className="review-step-heading">
-          <span>3</span>
-          <div>
-            <strong>Classify one primary error</strong>
-            <p>Name the thinking failure, not merely the replacement move.</p>
-          </div>
-        </div>
-        <label htmlFor="error-category">Error category</label>
-        <select
-          id="error-category"
-          value={review.errorCategory}
-          onChange={(event) =>
-            update({ errorCategory: event.target.value as ImportedGameReview["errorCategory"] })
-          }
-        >
-          <option value="">Choose the best fit</option>
-          {errorCategories.map((category) => (
-            <option key={category} value={category}>
-              {category}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      <div className="review-step">
-        <div className="review-step-heading">
-          <span>4</span>
-          <div>
-            <strong>Record one corrective drill</strong>
-            <p>Finish with a specific action you can repeat and retest.</p>
-          </div>
-        </div>
-        <label htmlFor="corrective-drill">Corrective drill</label>
-        <textarea
-          id="corrective-drill"
-          rows={3}
-          value={review.correctiveDrill}
-          onChange={(event) => update({ correctiveDrill: event.target.value })}
-          placeholder="For example: solve 20 back-rank positions, then retest this position from both sides."
-        />
-      </div>
-
-      {review.completed ? (
-        <div className="review-complete" role="status">
-          <Check size={17} />
-          <div>
-            <strong>Session review complete</strong>
-            <p>
-              {review.errorCategory} → {review.correctiveDrill}
-            </p>
-            {review.trainingWeekLink && (
-              <Button
-                className="open-linked-week-button"
-                tone="secondary"
-                size="sm"
-                onClick={() => onOpenTrainingWeek(review.trainingWeekLink?.weekNumber ?? 1)}
-              >
-                Open linked Week {review.trainingWeekLink.weekNumber}
-              </Button>
-            )}
-          </div>
-        </div>
-      ) : (
-        <div className="review-completion-action">
-          <p>
-            Completing this review links its error category and corrective drill to Week{" "}
-            {selectedTrainingWeek} of your open-tab plan.
-          </p>
-          <Button
-            className="complete-review-button"
-            tone="primary"
-            disabled={!canComplete}
-            onClick={() => onComplete(review)}
-          >
-            <Dumbbell size={16} /> Complete session review
+          <Button tone="primary" onClick={() => onStage("diagnosis")}>
+            Continue to diagnosis
           </Button>
         </div>
       )}
+      {stage === "diagnosis" && (
+        <div className="review-step">
+          <h2>Diagnosis and drill</h2>
+          <p>Name a thinking failure and one action you can repeat.</p>
+          <label htmlFor="error-category">Error category</label>
+          <select
+            id="error-category"
+            value={review.errorCategory}
+            onChange={(e) => update({ errorCategory: e.target.value as ErrorCategory })}
+          >
+            <option value="">Choose the best fit</option>
+            {errorCategories.map((c) => (
+              <option key={c}>{c}</option>
+            ))}
+          </select>
+          <label htmlFor="corrective-drill">Corrective drill</label>
+          <textarea
+            id="corrective-drill"
+            value={review.correctiveDrill}
+            rows={4}
+            onChange={(e) => update({ correctiveDrill: e.target.value })}
+          />
+          <Button tone="primary" onClick={() => onStage("complete")}>
+            Review completion
+          </Button>
+        </div>
+      )}
+      {stage === "complete" && (
+        <div className="review-step">
+          <h2>{review.completed ? "Session review complete" : "Complete your review"}</h2>
+          <label htmlFor="review-week">Training week</label>
+          <select id="review-week" value={week} onChange={(e) => onWeek(Number(e.target.value))}>
+            {Array.from({ length: 12 }, (_, i) => (
+              <option key={i + 1} value={i + 1}>
+                Week {i + 1}
+              </option>
+            ))}
+          </select>
+          {missing.length > 0 && (
+            <div>
+              <p>Before completing:</p>
+              <ul>
+                {missing.map((r) => (
+                  <li key={r.label}>
+                    <button type="button" onClick={() => onStage(r.stage)}>
+                      {r.label}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          <p>
+            {review.errorCategory} {review.correctiveDrill}
+          </p>
+          {review.completed ? (
+            <Button tone="primary" onClick={onOpenWeek}>
+              Open linked Week {week}
+            </Button>
+          ) : (
+            <Button tone="primary" disabled={missing.length > 0} onClick={onComplete}>
+              Complete session review
+            </Button>
+          )}
+        </div>
+      )}
     </section>
-  );
-}
-
-function ProgressItem({ complete, children }: { complete: boolean; children: string }) {
-  return (
-    <li className={cn(complete && "complete")}>
-      <span aria-hidden="true">{complete ? <Check size={11} /> : null}</span>
-      {children}
-    </li>
   );
 }

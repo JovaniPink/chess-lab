@@ -26,7 +26,9 @@ describe("TrainingPlanView", () => {
     const user = userEvent.setup();
     render(<TrainingPlanHarness />);
 
-    expect(screen.getByText(/Edits survive view changes, then disappear/)).toBeVisible();
+    expect(screen.getByText(/Stored only in this tab/)).toBeVisible();
+    await user.click(screen.getByText("Cycle goals", { selector: "summary" }));
+    await user.click(screen.getByText("Activity targets and counts", { selector: "summary" }));
     await user.type(
       screen.getByRole("textbox", { name: "Decision-quality goal" }),
       "Notice every immediate threat before choosing candidates.",
@@ -69,6 +71,7 @@ describe("TrainingPlanView", () => {
     const user = userEvent.setup();
     const firstSession = render(<TrainingPlanHarness />);
 
+    await user.click(screen.getByText("Cycle goals", { selector: "summary" }));
     await user.type(
       screen.getByRole("textbox", { name: "Most important habit to build" }),
       "Write candidates before calculating.",
@@ -76,6 +79,7 @@ describe("TrainingPlanView", () => {
     firstSession.unmount();
 
     render(<TrainingPlanHarness />);
+    await user.click(screen.getByText("Cycle goals", { selector: "summary" }));
     expect(screen.getByRole("textbox", { name: "Most important habit to build" })).toHaveValue("");
   });
 });
@@ -84,8 +88,11 @@ function TrainingPlanHarness() {
   const [plan, setPlan] = useState(() => createTrainingPlan());
   const [selectedWeek, setSelectedWeek] = useState(1);
 
+  const [disclosures, setDisclosures] = useState<Record<string, boolean>>({});
   return (
     <TrainingPlanView
+      disclosures={disclosures}
+      onDisclosure={(id, open) => setDisclosures((d) => ({ ...d, [id]: open }))}
       plan={plan}
       selectedWeek={selectedWeek}
       onChange={setPlan}

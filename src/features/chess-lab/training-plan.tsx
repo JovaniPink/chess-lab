@@ -14,7 +14,9 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import type { ErrorCategory } from "./imported-game-review";
+import { gameIdentity, type SessionGame } from "./session-game";
+import { SummaryActions } from "./summary-actions";
+import { weekSummary } from "./summaries";
 
 const activityBlueprints = [
   { id: "serious-games", label: "Serious games", target: "2" },
@@ -125,8 +127,7 @@ export type WeeklyReview = {
 
 export type TrainingReviewLink = {
   id: string;
-  errorCategory: ErrorCategory;
-  correctiveDrill: string;
+  gameId: string;
 };
 
 export type TrainingWeek = {
@@ -203,6 +204,10 @@ type TrainingPlanViewProps = {
   selectedWeek: number;
   onChange: (plan: TrainingPlan) => void;
   onSelectWeek: (week: number) => void;
+  sessions?: SessionGame[];
+  onOpenGame?: (id: string, ply: number) => void;
+  disclosures?: Record<string, boolean>;
+  onDisclosure?: (id: string, open: boolean) => void;
 };
 
 export function TrainingPlanView({
@@ -210,6 +215,10 @@ export function TrainingPlanView({
   selectedWeek,
   onChange,
   onSelectWeek,
+  sessions = [],
+  onOpenGame,
+  disclosures = {},
+  onDisclosure,
 }: TrainingPlanViewProps) {
   const week = plan.weeks[selectedWeek - 1] ?? plan.weeks[0];
   const completedCommitments = week.commitments.filter((item) => item.complete).length;
@@ -266,7 +275,7 @@ export function TrainingPlanView({
           </div>
           <div>
             <p className="eyebrow">Systematic training workbook</p>
-            <h2 id="training-plan-title">Your 12-week training cycle</h2>
+            <h2 id="training-plan-title">This week’s training</h2>
             <p>
               Start with your games and your thinking. Rating is secondary; better decisions are the
               work.
@@ -277,57 +286,10 @@ export function TrainingPlanView({
           <ShieldCheck size={17} />
           <div>
             <strong>Open-tab plan</strong>
-            <span>Edits survive view changes, then disappear on refresh or close.</span>
+            <span>Stored only in this tab. Copy or print anything you want to keep.</span>
           </div>
         </div>
       </header>
-
-      <section className="cycle-compass" aria-labelledby="cycle-compass-title">
-        <div className="plan-section-heading">
-          <div>
-            <p className="eyebrow">Cycle compass</p>
-            <h3 id="cycle-compass-title">Define the behavior you want to change</h3>
-          </div>
-          <span>Editable this session</span>
-        </div>
-        <div className="objective-grid">
-          <PlanField
-            id="weekly-time"
-            label="Weekly study time available"
-            value={plan.objective.weeklyTime}
-            placeholder="For example: 5 focused hours"
-            onChange={(value) => updateObjective("weeklyTime", value)}
-          />
-          <PlanField
-            id="outcome-goal"
-            label="Twelve-week outcome goal"
-            value={plan.objective.outcomeGoal}
-            placeholder="A concrete body of work, not a rating promise"
-            onChange={(value) => updateObjective("outcomeGoal", value)}
-          />
-          <PlanField
-            id="decision-quality-goal"
-            label="Decision-quality goal"
-            value={plan.objective.decisionQualityGoal}
-            placeholder="The decisions you want to make more reliably"
-            onChange={(value) => updateObjective("decisionQualityGoal", value)}
-          />
-          <PlanField
-            id="habit-to-build"
-            label="Most important habit to build"
-            value={plan.objective.habitToBuild}
-            placeholder="For example: threat scan after every opponent move"
-            onChange={(value) => updateObjective("habitToBuild", value)}
-          />
-          <PlanField
-            id="behavior-to-reduce"
-            label="Behavior to reduce or eliminate"
-            value={plan.objective.behaviorToReduce}
-            placeholder="The recurring shortcut that costs you decisions"
-            onChange={(value) => updateObjective("behaviorToReduce", value)}
-          />
-        </div>
-      </section>
 
       <div className="plan-progress" aria-label="Cycle progress">
         <div>
@@ -418,13 +380,32 @@ export function TrainingPlanView({
               </div>
             </div>
             <div className="linked-review-list">
-              {week.linkedReviews.map((linkedReview, index) => (
-                <article className="linked-review-card" key={linkedReview.id}>
-                  <span>Imported review {index + 1}</span>
-                  <strong>{linkedReview.errorCategory}</strong>
-                  <p>{linkedReview.correctiveDrill}</p>
-                </article>
-              ))}
+              {week.linkedReviews.map((link) => {
+                const session = sessions.find((item) => item.id === link.gameId);
+                if (!session) return null;
+                return (
+                  <article className="linked-review-card" key={link.id}>
+                    <h4>{gameIdentity(session)}</h4>
+                    <strong>
+                      {session.review.completed ? "Completed review" : "Needs completion again"}
+                    </strong>
+                    <p>{session.review.errorCategory}</p>
+                    <p>{session.review.correctiveDrill}</p>
+                    {session.review.criticalPositions.map((position) => (
+                      <Button
+                        key={position.ply}
+                        tone="secondary"
+                        onClick={() => onOpenGame?.(session.id, position.ply)}
+                      >
+                        Open {position.label}
+                      </Button>
+                    ))}
+                    <Button tone="ghost" onClick={() => onOpenGame?.(session.id, session.ply)}>
+                      Open game review
+                    </Button>
+                  </article>
+                );
+              })}
             </div>
           </section>
         )}
@@ -465,7 +446,12 @@ export function TrainingPlanView({
             </div>
           </section>
 
-          <section className="plan-card" aria-labelledby="weekly-rhythm-title">
+          <details
+            className="plan-card"
+            open={disclosures.activities ?? false}
+            onToggle={(e) => onDisclosure?.("activities", e.currentTarget.open)}
+          >
+            <summary>Activity targets and counts</summary>
             <div className="plan-card-title">
               <ListChecks size={17} />
               <div>
@@ -511,10 +497,15 @@ export function TrainingPlanView({
               onChange={(event) => updateWeek({ trainingNotes: event.target.value })}
               placeholder="What needs protecting, rescheduling, or changing this week?"
             />
-          </section>
+          </details>
         </div>
 
-        <section className="decision-quality" aria-labelledby="decision-quality-title">
+        <details
+          className="decision-quality"
+          open={disclosures.metrics ?? false}
+          onToggle={(e) => onDisclosure?.("metrics", e.currentTarget.open)}
+        >
+          <summary>Decision-quality signals</summary>
           <div className="plan-card-title">
             <Clock3 size={17} />
             <div>
@@ -550,9 +541,14 @@ export function TrainingPlanView({
               onChange={(value) => updateMetric("endgamesExecuted", value)}
             />
           </div>
-        </section>
+        </details>
 
-        <section className="weekly-reflection" aria-labelledby="weekly-reflection-title">
+        <details
+          className="weekly-reflection"
+          open={disclosures.reflection ?? false}
+          onToggle={(e) => onDisclosure?.("reflection", e.currentTarget.open)}
+        >
+          <summary>Weekly reflection</summary>
           <div className="plan-card-title">
             <NotebookPen size={17} />
             <div>
@@ -597,8 +593,61 @@ export function TrainingPlanView({
               multiline
             />
           </div>
-        </section>
+        </details>
       </article>
+      <details
+        className="cycle-compass"
+        open={disclosures.cycle ?? false}
+        onToggle={(e) => onDisclosure?.("cycle", e.currentTarget.open)}
+      >
+        <summary>Cycle goals</summary>
+        <div className="plan-section-heading">
+          <div>
+            <p className="eyebrow">Cycle compass</p>
+            <h3 id="cycle-compass-title">Define the behavior you want to change</h3>
+          </div>
+          <span>Editable this session</span>
+        </div>
+        <div className="objective-grid">
+          <PlanField
+            id="weekly-time"
+            label="Weekly study time available"
+            value={plan.objective.weeklyTime}
+            placeholder="For example: 5 focused hours"
+            onChange={(value) => updateObjective("weeklyTime", value)}
+          />
+          <PlanField
+            id="outcome-goal"
+            label="Twelve-week outcome goal"
+            value={plan.objective.outcomeGoal}
+            placeholder="A concrete body of work, not a rating promise"
+            onChange={(value) => updateObjective("outcomeGoal", value)}
+          />
+          <PlanField
+            id="decision-quality-goal"
+            label="Decision-quality goal"
+            value={plan.objective.decisionQualityGoal}
+            placeholder="The decisions you want to make more reliably"
+            onChange={(value) => updateObjective("decisionQualityGoal", value)}
+          />
+          <PlanField
+            id="habit-to-build"
+            label="Most important habit to build"
+            value={plan.objective.habitToBuild}
+            placeholder="For example: threat scan after every opponent move"
+            onChange={(value) => updateObjective("habitToBuild", value)}
+          />
+          <PlanField
+            id="behavior-to-reduce"
+            label="Behavior to reduce or eliminate"
+            value={plan.objective.behaviorToReduce}
+            placeholder="The recurring shortcut that costs you decisions"
+            onChange={(value) => updateObjective("behaviorToReduce", value)}
+          />
+        </div>
+      </details>
+
+      <SummaryActions summary={weekSummary(plan, week.number, sessions)} />
     </section>
   );
 }
