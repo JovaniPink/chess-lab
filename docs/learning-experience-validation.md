@@ -16,11 +16,15 @@ App Router routes, dependency lockfile, and Vinext/Nitro/Netlify contracts are u
   reaches the beginning or end. Retry, reveal, and mode changes focus the workspace heading.
 - Explicit practice phases in the existing XState context: answering, incorrect, solved, revealed,
   and summary. Wrong-answer feedback does not reveal other candidate explanations. Runs preserve
-  attempts and hints across modes/imports; recap and targeted retries distinguish outcomes.
+  attempts and hints across modes/imports; recap and targeted retries distinguish outcomes. The
+  machine ignores answer, hint, retry, reveal, skip, and continue events outside their phases.
+  Practice this position jumps inside the current run, and any action that would replace run
+  progress asks for confirmation in a native modal dialog.
 - First-impressions-first imported review with optional skip, editable stages, completion checklist,
   three distinct marked positions, and a chosen training week.
 - Stable tab game IDs, separate repeated imports, identifiable game selectors/cards, exact-position
-  reopening, and one canonical review link that updates/moves on re-completion. Edits flag the link.
+  reopening, and one canonical review link that updates/moves on re-completion. Edits flag the link;
+  changing the training week removes the old week's link until the review is completed again.
 - Focused weekly training with retained workbook defaults and disclosure state. Shared read-only
   clipboard/print summaries exclude raw PGN and unrelated games, and identify draft reviews.
 
@@ -28,23 +32,24 @@ App Router routes, dependency lockfile, and Vinext/Nitro/Netlify contracts are u
 
 Local execution used Node 24.19.0 and integrity-pinned npm 12.0.2.
 
-| Check                                       | Result                                              |
-| ------------------------------------------- | --------------------------------------------------- |
-| `corepack npm install-scripts ls`           | No unreviewed install scripts                       |
-| Formatting and ESLint                       | Pass                                                |
-| Baseline and toolchain contracts            | Pass                                                |
-| TypeScript 7 and TypeScript 6 compatibility | Pass                                                |
-| Vitest                                      | 49 tests in 10 files pass                           |
-| Production dependency audit                 | Zero vulnerabilities                                |
-| Full dependency audit                       | Fails: unexpected development dependency advisories |
-| Development-only transitive guards          | Pass                                                |
-| Production build and artifact contract      | Pass                                                |
-| Packaged Netlify smoke tests                | Pass: all 9 checks on the final rebuild             |
+| Check                                       | Result                                  |
+| ------------------------------------------- | --------------------------------------- |
+| `corepack npm install-scripts ls`           | No unreviewed install scripts           |
+| Formatting and ESLint                       | Pass                                    |
+| Baseline and toolchain contracts            | Pass                                    |
+| TypeScript 7 and TypeScript 6 compatibility | Pass                                    |
+| Vitest                                      | 58 tests in 10 files pass               |
+| Production dependency audit                 | Zero vulnerabilities                    |
+| Full dependency audit                       | No advisories at any severity           |
+| Development-only transitive guards          | Pass                                    |
+| Production build and artifact contract      | Pass                                    |
+| Packaged Netlify smoke tests                | Pass: all 9 checks on the final rebuild |
 
 Regression coverage includes keyboard orientation/corners, illegal destinations, promotion cancel
 and underpromotion, focus after moves/retry/undo, and variation rollback through capture, castling,
 en passant, and underpromotion. Practice coverage includes wrong/retry/correct, hint/correct,
-reveal, skip, mixed recap counts, fresh/targeted restarts, and run preservation. Review coverage
+reveal, skip, mixed recap counts, fresh/targeted restarts, run preservation through Practice this
+position, restart confirmation, and out-of-phase machine events. Review coverage
 includes invalid drafts, memory skip, requirements, marker limits, identical-name/repeated games,
 changed completion weeks, draft links, exact-position reopening, and Black-to-move FEN numbering.
 Summary tests cover clipboard success/failure/manual fallback, draft scope, unrelated-game exclusion,
@@ -90,19 +95,12 @@ value. No warnings/errors were captured in that flow. Reload restored the introd
 board and removed the retained-game selector, confirming temporary state was cleared. This does
 not establish a full screen-reader journey or complete sequential keyboard traversal.
 
-## Release stop: dependency findings
+## Dependency findings
 
-The required full gate stopped at `audit:dependencies`. No exceptions, dependencies, or overrides
-were changed. Alongside the existing extract-zip advisory, the unchanged development graph now
-reports TOML recursion/prototype-pollution advisories and an fflate ZIP64 infinite-loop advisory:
-
-- [TOML recursion: GHSA-82x6-q7mm-w9cf](https://github.com/advisories/GHSA-82x6-q7mm-w9cf)
-- [TOML prototype pollution: GHSA-v5mp-jgw5-2x6j](https://github.com/advisories/GHSA-v5mp-jgw5-2x6j)
-- [fflate ZIP64 loop: GHSA-px8p-9vwx-vf98](https://github.com/advisories/GHSA-px8p-9vwx-vf98)
-
-The audit totals are eight high and one moderate findings, including wrapper paths through Netlify
-build/functions tooling. The production graph remains clean. Resolving this needs separately scoped
-compatibility and dependency work; suppressing findings would violate the repository gate.
+An earlier run of the full gate stopped at `audit:dependencies` on development-only TOML, fflate, and
+extract-zip advisories. Main resolved them in #29 by moving to the Netlify CLI 27.8 toolchain and
+retiring the extract-zip exception. After merging main, the full audit reports no advisories at any
+severity and the transitive guards pass; see `docs/dependency-security.md`.
 
 The development server also logged intermittent `@vitejs/plugin-rsc` errors during hot rebuilds
 (`Cannot read properties of undefined (reading 'import')`). Final acceptance therefore used the
@@ -111,7 +109,7 @@ no framework versions or artifact contracts were changed.
 
 ## Remaining release acceptance
 
-The full gate and hosted CI on Node 22 and 24 must pass before release. No deployment is included.
+The local full gate passes; hosted CI on Node 22 and 24 must also pass before release. No deployment is included.
 A complete VoiceOver/Safari journey, physical touch-device acceptance, native 200% text scaling,
 400% browser zoom, reduced-motion browser preference, and A4/Letter print preview still need direct
 acceptance. Narrow viewport coverage is not a substitute for zoom, assistive technology, or touch.

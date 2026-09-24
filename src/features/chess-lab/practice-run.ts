@@ -47,3 +47,13 @@ export function practiceHabit(run: PracticeRun) {
     "After every opponent move, ask: What changed—especially which defender moved and which line opened?"
   );
 }
+export function hasPracticeProgress(run: PracticeRun | null) {
+  if (!run) return false;
+  return (
+    run.phase === "summary" ||
+    run.takeaway.trim() !== "" ||
+    Object.values(run.progress).some(
+      (p) => p.attempts.length > 0 || p.hintUsed || p.outcome !== "pending",
+    )
+  );
+}

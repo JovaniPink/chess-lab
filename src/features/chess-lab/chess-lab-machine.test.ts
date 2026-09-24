@@ -37,6 +37,13 @@ describe("chess lab state machine", () => {
     expect(actor.getSnapshot().context.submittedAnswer?.san).toBe("Nxc5");
 
     actor.send({ type: "NEXT_LESSON" });
+    expect(actor.getSnapshot().context.lessonIndex).toBe(2);
+    actor.send({ type: "RETRY" });
+    actor.send({
+      type: "SUBMIT_ANSWER",
+      answer: { san: "N4c3", fen: "replacement", correct: true },
+    });
+    actor.send({ type: "NEXT_LESSON" });
     expect(actor.getSnapshot().matches("practice")).toBe(true);
     expect(actor.getSnapshot().context.lessonIndex).toBe(3);
     expect(actor.getSnapshot().context.submittedAnswer).toBeNull();
@@ -91,4 +98,72 @@ it("retains attempts and hints across retry and game loading without counting re
     attempts: [{ san: "e5" }],
   });
   actor.stop();
+});
+
+describe("practice phase guards", () => {
+  const correct = { san: "Be2", fen: "solved", correct: true };
+  const wrong = { san: "e5", fen: "wrong", correct: false };
+
+  it("ignores reveal, skip, hint, and retry after a solve", () => {
+    const actor = createActor(chessLabMachine).start();
+    actor.send({ type: "PRACTICE" });
+    actor.send({ type: "SUBMIT_ANSWER", answer: correct });
+    const solved = actor.getSnapshot().context;
+    for (const type of ["SKIP", "HINT", "RETRY"] as const) actor.send({ type });
+    actor.send({ type: "REVEAL", answer: correct });
+    const after = actor.getSnapshot().context;
+    expect(after.run?.phase).toBe("solved");
+    expect(after.run?.cursor).toBe(0);
+    expect(after.run?.progress["premature-advance"]).toEqual(
+      solved.run?.progress["premature-advance"],
+    );
+    expect(after.submittedAnswer).toEqual(correct);
+    actor.stop();
+  });
+
+  it("ignores continue until the position is solved or revealed", () => {
+    const actor = createActor(chessLabMachine).start();
+    actor.send({ type: "PRACTICE" });
+    actor.send({ type: "NEXT_LESSON" });
+    expect(actor.getSnapshot().context.run?.cursor).toBe(0);
+    actor.send({ type: "SUBMIT_ANSWER", answer: wrong });
+    actor.send({ type: "NEXT_LESSON" });
+    actor.send({ type: "HINT" });
+    expect(actor.getSnapshot().context.run).toMatchObject({ cursor: 0, phase: "incorrect" });
+    expect(actor.getSnapshot().context.run?.progress["premature-advance"].hintUsed).toBe(false);
+    actor.send({ type: "REVEAL", answer: correct });
+    actor.send({ type: "RETRY" });
+    actor.send({ type: "SKIP" });
+    expect(actor.getSnapshot().context.run).toMatchObject({ cursor: 0, phase: "revealed" });
+    expect(actor.getSnapshot().context.run?.progress["premature-advance"].outcome).toBe("revealed");
+    actor.send({ type: "NEXT_LESSON" });
+    expect(actor.getSnapshot().context.run).toMatchObject({ cursor: 1, phase: "answering" });
+    actor.stop();
+  });
+
+  it("ignores lesson events once the run reaches its recap", () => {
+    const actor = createActor(chessLabMachine).start();
+    actor.send({ type: "PRACTICE" });
+    for (let i = 0; i < 5; i++) actor.send({ type: "SKIP" });
+    expect(actor.getSnapshot().context.run?.phase).toBe("summary");
+    const summary = actor.getSnapshot().context.run;
+    actor.send({ type: "SKIP" });
+    actor.send({ type: "NEXT_LESSON" });
+    actor.send({ type: "REVEAL", answer: correct });
+    actor.send({ type: "SUBMIT_ANSWER", answer: correct });
+    expect(actor.getSnapshot().context.run).toEqual(summary);
+    actor.stop();
+  });
+
+  it("jumps inside an existing run without discarding progress", () => {
+    const actor = createActor(chessLabMachine).start();
+    actor.send({ type: "PRACTICE" });
+    actor.send({ type: "SUBMIT_ANSWER", answer: correct });
+    actor.send({ type: "REVIEW" });
+    actor.send({ type: "PRACTICE", lessonIndex: 3 });
+    const run = actor.getSnapshot().context.run;
+    expect(run).toMatchObject({ cursor: 3, phase: "answering", lessonIds: { length: 5 } });
+    expect(run?.progress["premature-advance"]).toMatchObject({ outcome: "solved" });
+    actor.stop();
+  });
 });

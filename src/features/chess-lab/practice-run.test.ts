@@ -1,7 +1,7 @@
 import { createActor } from "xstate";
 import { expect, it } from "vitest";
 import { chessLabMachine } from "./chess-lab-machine";
-import { practiceStats } from "./practice-run";
+import { createPracticeRun, hasPracticeProgress, practiceStats } from "./practice-run";
 
 it("reports a mixed five-position run and starts a fresh targeted retry", () => {
   const actor = createActor(chessLabMachine).start();
@@ -36,4 +36,19 @@ it("reports a mixed five-position run and starts a fresh targeted retry", () => 
   actor.send({ type: "PRACTICE", restart: true });
   expect(actor.getSnapshot().context.run?.lessonIds).toHaveLength(5);
   actor.stop();
+});
+
+it("detects run progress that a restart would discard", () => {
+  const run = createPracticeRun();
+  expect(hasPracticeProgress(null)).toBe(false);
+  expect(hasPracticeProgress(run)).toBe(false);
+  const id = run.lessonIds[0];
+  expect(
+    hasPracticeProgress({
+      ...run,
+      progress: { ...run.progress, [id]: { ...run.progress[id], hintUsed: true } },
+    }),
+  ).toBe(true);
+  expect(hasPracticeProgress({ ...run, takeaway: "Check threats." })).toBe(true);
+  expect(hasPracticeProgress({ ...run, phase: "summary" })).toBe(true);
 });

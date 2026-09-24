@@ -58,13 +58,16 @@ Start with the five-position lesson, or choose Review your game to import notati
 answers reveal only the attempted move's feedback until the learner explicitly requests the
 coached move. Retries and hints remain in the run history. The recap distinguishes unassisted
 solutions, assisted solutions, reveals, and skips; targeted retry selects revealed/skipped positions.
-Switching modes or loading another game preserves the unfinished practice run.
+Switching modes or loading another game preserves the unfinished practice run. Practice this
+position jumps to that position inside the current run. Restarting, a targeted retry, or practicing
+a position outside the current run asks for confirmation before it replaces answers, hints, or a
+recap.
 
 Imported review starts with first impressions and an optional Skip for now action, followed by
 Positions, Diagnosis and drill, and Complete. Skipping impressions does not waive the completion
 requirement for nonblank thoughts. Links in the selected training week reopen the source game
 and exact marked position. Editing a completed review marks its existing link as needing completion
-again; re-completion updates that link and moves it when the chosen week changes.
+again; changing its training week removes the old link, and re-completion links it to the new week.
 
 The training view leads with the selected week and linked drills. Cycle goals, activity counts,
 decision-quality signals, and reflection use disclosures whose state survives view changes.

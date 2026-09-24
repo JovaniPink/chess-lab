@@ -80,7 +80,14 @@ function advance(context: ChessLabContext, skip = false) {
 }
 export const chessLabMachine = setup({
   types: { context: {} as ChessLabContext, events: {} as ChessLabEvent },
-  guards: { canAdvance: ({ context }) => context.currentPly < context.maxPly },
+  guards: {
+    canAdvance: ({ context }) => context.currentPly < context.maxPly,
+    answering: ({ context }) => context.run?.phase === "answering",
+    unresolved: ({ context }) =>
+      context.run?.phase === "answering" || context.run?.phase === "incorrect",
+    incorrect: ({ context }) => context.run?.phase === "incorrect",
+    resolved: ({ context }) => context.run?.phase === "solved" || context.run?.phase === "revealed",
+  },
   actions: {
     next: assign(({ context }) => ({
       currentPly: Math.min(context.currentPly + 1, context.maxPly),
@@ -124,7 +131,7 @@ export const chessLabMachine = setup({
       };
     }),
     answer: assign(({ context, event }) => {
-      if (event.type !== "SUBMIT_ANSWER" || context.run?.phase !== "answering") return {};
+      if (event.type !== "SUBMIT_ANSWER" || !context.run) return {};
       const progress = context.run.progress[context.run.lessonIds[context.run.cursor]];
       return {
         submittedAnswer: event.answer,
@@ -222,12 +229,12 @@ export const chessLabMachine = setup({
     },
     practice: {
       on: {
-        SUBMIT_ANSWER: { actions: "answer" },
-        RETRY: { actions: "retry" },
-        REVEAL: { actions: "reveal" },
-        HINT: { actions: "hint" },
-        NEXT_LESSON: { actions: "advance" },
-        SKIP: { actions: "skip" },
+        SUBMIT_ANSWER: { guard: "answering", actions: "answer" },
+        RETRY: { guard: "incorrect", actions: "retry" },
+        REVEAL: { guard: "unresolved", actions: "reveal" },
+        HINT: { guard: "answering", actions: "hint" },
+        NEXT_LESSON: { guard: "resolved", actions: "advance" },
+        SKIP: { guard: "unresolved", actions: "skip" },
       },
     },
     explore: {

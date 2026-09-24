@@ -27,6 +27,8 @@ import {
 } from "./imported-game-review";
 import { PgnImportDialog } from "./pgn-import-dialog";
 import { PracticePanel } from "./practice-panel";
+import { hasPracticeProgress } from "./practice-run";
+import { RestartRunDialog } from "./restart-run-dialog";
 import { ReviewPanel } from "./review-panel";
 import { createTrainingPlan, TrainingPlanView } from "./training-plan";
 import { gameIdentity, gameMetadata, type ReviewStage, type SessionGame } from "./session-game";
@@ -50,6 +52,10 @@ export function ChessLab() {
   const [disclosures, setDisclosures] = useState<Record<string, boolean>>({});
   const [message, setMessage] = useState("Bundled study loaded.");
   const [focusVersion, setFocusVersion] = useState(0);
+  const [pendingRestart, setPendingRestart] = useState<{
+    lessonIds?: string[];
+    lessonIndex?: number;
+  } | null>(null);
   const heading = useRef<HTMLHeadingElement>(null);
   const nextId = useRef(1);
   useEffect(() => {
@@ -82,7 +88,7 @@ export function ChessLab() {
       ? practicePosition()
       : chessAtPly(game, currentPly);
   const positionLabel = practice
-    ? `Position ${state.context.lessonIndex + 1}, ${run?.phase === "answering" ? "your move" : "feedback"}`
+    ? `Position ${(run?.cursor ?? 0) + 1} of ${run?.lessonIds.length ?? 0}, ${run?.phase === "answering" ? "your move" : "feedback"}`
     : explore
       ? `variation after ${state.context.branchMoves.length} branch moves`
       : label;
@@ -154,15 +160,22 @@ export function ChessLab() {
     setActiveGameId(null);
     setTraining(false);
     if (!original) send({ type: "LOAD_GAME", maxPly: originalGame.moves.length, ply: bundledPly });
-    send({
-      type: "PRACTICE",
-      restart,
-      lessonIndex,
-      lessonIds:
-        lessonIds ??
-        (lessonIndex === undefined ? undefined : [jovaniStudy.lessons[lessonIndex].id]),
-    });
+    send({ type: "PRACTICE", restart, lessonIndex, lessonIds });
     focusWorkspace();
+  }
+  function startNewRun(lessonIds?: string[], lessonIndex?: number) {
+    if (hasPracticeProgress(run)) setPendingRestart({ lessonIds, lessonIndex });
+    else startPractice(true, lessonIndex, lessonIds);
+  }
+  function practiceLesson(lessonIndex: number) {
+    if (!run || run.lessonIds.includes(jovaniStudy.lessons[lessonIndex].id))
+      startPractice(false, lessonIndex);
+    else startNewRun(undefined, lessonIndex);
+  }
+  function confirmRestart() {
+    const pending = pendingRestart;
+    setPendingRestart(null);
+    if (pending) startPractice(true, pending.lessonIndex, pending.lessonIds);
   }
   function enterExplore() {
     setTraining(false);
@@ -212,6 +225,22 @@ export function ChessLab() {
     });
     setMessage(`Review completed and linked to Week ${session.week}.`);
     focusWorkspace();
+  }
+  function changeWeek(week: number) {
+    if (!session || week === session.week) return;
+    const id = `review-${session.id}`;
+    setPlan((current) => ({
+      ...current,
+      weeks: current.weeks.map((w) =>
+        w.linkedReviews.some((l) => l.id === id)
+          ? { ...w, linkedReviews: w.linkedReviews.filter((l) => l.id !== id) }
+          : w,
+      ),
+    }));
+    updateSession({
+      week,
+      review: { ...session.review, completed: false, trainingWeekLink: null },
+    });
   }
   function mark() {
     if (
@@ -309,7 +338,7 @@ export function ChessLab() {
           <h1>Improve your chess decisions through guided practice and your own game reviews.</h1>
           <p>For players who know the moves and want to make better decisions.</p>
           <div className="action-row">
-            <Button tone="primary" onClick={() => startPractice(true)}>
+            <Button tone="primary" onClick={() => startNewRun()}>
               Start five-position lesson
             </Button>
             <Button tone="secondary" onClick={() => setShowImport(true)}>
@@ -433,9 +462,7 @@ export function ChessLab() {
                 )
               }
               onClick={() =>
-                startPractice(
-                  true,
-                  undefined,
+                startNewRun(
                   run.lessonIds.filter((id) =>
                     ["revealed", "skipped"].includes(run.progress[id].outcome),
                   ),
@@ -447,7 +474,7 @@ export function ChessLab() {
             <Button tone="secondary" onClick={openReview}>
               Review the game
             </Button>
-            <Button tone="ghost" onClick={() => startPractice(true)}>
+            <Button tone="ghost" onClick={() => startNewRun()}>
               Restart five-position lesson
             </Button>
           </div>
@@ -466,7 +493,7 @@ export function ChessLab() {
                   ? "Make a legal move on the board or choose a candidate."
                   : "Your answer is shown. Read the feedback to continue."}
               </p>
-              <Button tone="ghost" onClick={() => startPractice(true)}>
+              <Button tone="ghost" onClick={() => startNewRun()}>
                 Restart five-position lesson
               </Button>
             </section>
@@ -648,7 +675,7 @@ export function ChessLab() {
                     currentPly={currentPly}
                     isOriginal={original}
                     onSeek={seek}
-                    onPractice={(i) => startPractice(true, i)}
+                    onPractice={practiceLesson}
                   />
                 )}
                 {session && (
@@ -658,9 +685,7 @@ export function ChessLab() {
                       stage={session.stage}
                       week={session.week}
                       onStage={stage}
-                      onWeek={(week) =>
-                        updateSession({ week, review: { ...session.review, completed: false } })
-                      }
+                      onWeek={changeWeek}
                       onChange={updateReview}
                       onSeek={seek}
                       onComplete={complete}
@@ -695,6 +720,11 @@ export function ChessLab() {
       <p className="sr-only" role="status">
         {message}
       </p>
+      <RestartRunDialog
+        open={pendingRestart !== null}
+        onCancel={() => setPendingRestart(null)}
+        onConfirm={confirmRestart}
+      />
       <PgnImportDialog
         open={showImport}
         defaultPgn={jovaniStudy.pgn}
