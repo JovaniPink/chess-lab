@@ -12,20 +12,20 @@ Jovani Chess Lab is a focused chess-analysis and training application. It uses N
 
 ## Canonical commands
 
-| Command                               | Purpose                                                     |
-| ------------------------------------- | ----------------------------------------------------------- |
-| `corepack npm run dev`                | Start the local Vinext development server                   |
-| `corepack npm run dev:netlify`        | Run the application through Netlify Dev                     |
-| `corepack npm run lint`               | Run ESLint                                                  |
-| `corepack npm run typecheck`          | Run the TypeScript 7 native CLI                             |
-| `corepack npm run typecheck:compat`   | Run the TypeScript 6 Vinext compatibility API               |
-| `corepack npm run test`               | Run Vitest unit and interaction tests                       |
-| `corepack npm run build`              | Build and validate the Nitro/Netlify artifact               |
-| `corepack npm run test:artifact`      | Smoke-test the packaged Netlify runtime                     |
-| `corepack npm run audit:production`   | Reject high-severity production dependency findings         |
-| `corepack npm run audit:dependencies` | Audit the full graph against the exact documented exception |
-| `corepack npm run test-all`           | Run every required Netlify-focused quality gate             |
-| `corepack npm run format`             | Format the repository with Prettier                         |
+| Command                               | Purpose                                                 |
+| ------------------------------------- | ------------------------------------------------------- |
+| `corepack npm run dev`                | Start the local Vinext development server               |
+| `corepack npm run dev:netlify`        | Run the application through Netlify Dev                 |
+| `corepack npm run lint`               | Run ESLint                                              |
+| `corepack npm run typecheck`          | Run the TypeScript 7 native CLI                         |
+| `corepack npm run typecheck:compat`   | Run the TypeScript 6 Vinext compatibility API           |
+| `corepack npm run test`               | Run Vitest unit and interaction tests                   |
+| `corepack npm run build`              | Build and validate the Nitro/Netlify artifact           |
+| `corepack npm run test:artifact`      | Smoke-test the packaged Netlify runtime                 |
+| `corepack npm run audit:production`   | Reject high-severity production dependency findings     |
+| `corepack npm run audit:dependencies` | Audit the full graph; no advisory exception is accepted |
+| `corepack npm run test-all`           | Run every required Netlify-focused quality gate         |
+| `corepack npm run format`             | Format the repository with Prettier                     |
 
 ## Working rules
 
@@ -40,8 +40,8 @@ Jovani Chess Lab is a focused chess-analysis and training application. It uses N
 
 Before finishing a change, run `corepack npm install-scripts ls` and
 `corepack npm run test-all`. The complete gate includes production and full dependency audits. The
-full audit succeeds only when its remaining findings are the exact documented development-only
-Netlify advisory paths; any new advisory fails. Do not suppress findings or force unsupported
+full audit accepts no advisory at any severity unless an exception is documented in
+`docs/dependency-security.md`; any new advisory fails. Do not suppress findings or force unsupported
 transitive overrides.
 
 ## Framework and publication safety

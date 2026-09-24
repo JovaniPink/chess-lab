@@ -34,7 +34,7 @@ function isAtLeast(version, minimum) {
 }
 
 function isFixedSharp(version) {
-  return isAtLeast(version, "0.35.0");
+  return isAtLeast(version, "0.35.4");
 }
 
 function visit(dependencies = {}, path = []) {
@@ -57,14 +57,9 @@ visit(tree.dependencies);
 
 const lockedPackages = lock.packages ?? {};
 const minimumNetlifyVersions = [
-  ["node_modules/netlify-cli", "netlify-cli", "27.3.0"],
-  ["node_modules/@netlify/dev", "@netlify/dev", "5.0.1"],
-  ["node_modules/@netlify/functions-dev", "@netlify/functions-dev", "2.0.1"],
-  [
-    "node_modules/netlify-cli/node_modules/@netlify/dev-utils",
-    "netlify-cli @netlify/dev-utils",
-    "6.0.1",
-  ],
+  ["node_modules/netlify-cli", "netlify-cli", "27.8.1"],
+  ["node_modules/@netlify/dev", "@netlify/dev", "5.1.2"],
+  ["node_modules/@netlify/functions-dev", "@netlify/functions-dev", "2.0.7"],
 ];
 
 for (const [path, name, minimum] of minimumNetlifyVersions) {
@@ -81,19 +76,23 @@ if (netlifyDevUtilsPaths.length === 0) {
   violations.push("package-lock.json: no @netlify/dev-utils path is present");
 }
 for (const [path, metadata] of netlifyDevUtilsPaths) {
-  if (!isAtLeast(metadata.version ?? "0.0.0", "5.0.0")) {
-    violations.push(`${path}@${metadata.version ?? "unknown"} is older than 5.0.0`);
+  if (!isAtLeast(metadata.version ?? "0.0.0", "6.0.1")) {
+    violations.push(`${path}@${metadata.version ?? "unknown"} is older than 6.0.1`);
   }
 }
 
-const imageSizePaths = Object.entries(lockedPackages)
-  .filter(
-    ([path]) => path === "node_modules/image-size" || path.endsWith("/node_modules/image-size"),
-  )
-  .map(([path, metadata]) => `${path}@${metadata.version ?? "unknown"}`);
+for (const removedPackage of ["image-size", "extract-zip"]) {
+  const removedPaths = Object.entries(lockedPackages)
+    .filter(
+      ([path]) =>
+        path === `node_modules/${removedPackage}` ||
+        path.endsWith(`/node_modules/${removedPackage}`),
+    )
+    .map(([path, metadata]) => `${path}@${metadata.version ?? "unknown"}`);
 
-if (imageSizePaths.length > 0) {
-  violations.push(`package-lock.json reintroduced image-size: ${imageSizePaths.join(", ")}`);
+  if (removedPaths.length > 0) {
+    violations.push(`package-lock.json reintroduced ${removedPackage}: ${removedPaths.join(", ")}`);
+  }
 }
 
 if (violations.length > 0) {
@@ -105,6 +104,6 @@ if (violations.length > 0) {
   process.exitCode = 1;
 } else {
   console.log(
-    "Verified: extract-zip and image-size are absent from production; production Sharp is >=0.35.0; the supported Netlify 27.3 toolchain is locked with no image-size path.",
+    "Verified: extract-zip and image-size are absent from the lockfile; Sharp is >=0.35.4; the supported Netlify 27.8 toolchain is locked.",
   );
 }

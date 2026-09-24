@@ -105,18 +105,14 @@ corepack npm run build
 corepack npm run test:artifact
 ```
 
-`corepack npm run test-all` includes the production audit and an allowlisted full dependency audit.
-The latter runs npm's complete audit and succeeds only when the remaining findings are the three
-documented development-only paths caused by `GHSA-jmr9-qjv8-65gv`; every other advisory fails. The
-transitive guard keeps that exception out of production, rejects Sharp versions older than 0.35.0,
-and prevents the lockfile from reintroducing the removed `image-size` path. The lock uses Netlify CLI 27.3.0, while its supported
-`@netlify/functions-dev` path still selects vulnerable `extract-zip@2.0.1`, for which no fixed
-release exists. That development-tool exception is monitored in
-[issue #4](https://github.com/JovaniPink/chess-lab/issues/4). Do not use `npm audit fix --force` or
-downgrade the runtime toolchain merely to make that separate audit green. The narrow Sharp
-override, remaining paths, review deadline, and removal criteria are documented in
-[docs/dependency-security.md](docs/dependency-security.md). Every toolchain override must pass the
-production audit, Vinext/Nitro build, and packaged Netlify runtime tests.
+`corepack npm run test-all` includes the production audit and a full dependency audit. The latter
+runs npm's complete audit and currently accepts no advisory at any severity; every finding fails.
+The transitive guard rejects Sharp versions older than 0.35.4, requires the Netlify CLI 27.8
+toolchain, and prevents the lockfile from reintroducing the removed `extract-zip` and `image-size`
+paths. Do not use `npm audit fix --force` or downgrade the runtime toolchain merely to make the
+audit green. The narrow Sharp override, the retired `extract-zip` exception, and removal criteria
+are documented in [docs/dependency-security.md](docs/dependency-security.md). Every toolchain
+override must pass the production audit, Vinext/Nitro build, and packaged Netlify runtime tests.
 
 ## Product identity
 
