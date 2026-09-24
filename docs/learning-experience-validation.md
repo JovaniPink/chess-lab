@@ -38,7 +38,7 @@ Local execution used Node 24.19.0 and integrity-pinned npm 12.0.2.
 | Formatting and ESLint                       | Pass                                    |
 | Baseline and toolchain contracts            | Pass                                    |
 | TypeScript 7 and TypeScript 6 compatibility | Pass                                    |
-| Vitest                                      | 58 tests in 10 files pass               |
+| Vitest                                      | 59 tests in 10 files pass               |
 | Production dependency audit                 | Zero vulnerabilities                    |
 | Full dependency audit                       | No advisories at any severity           |
 | Development-only transitive guards          | Pass                                    |

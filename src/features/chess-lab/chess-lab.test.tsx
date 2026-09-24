@@ -103,6 +103,20 @@ describe("ChessLab learning journeys", () => {
     expect(screen.getByText("Solved without help").nextElementSibling).toHaveTextContent("1");
     expect(screen.getByText("Skipped").nextElementSibling).toHaveTextContent("3");
   });
+  it("records an illegal lesson candidate as an incorrect attempt with its explanation", async () => {
+    const user = userEvent.setup();
+    render(<ChessLab />);
+    await user.click(screen.getByRole("button", { name: "Review" }));
+    await user.click(screen.getByText(/^Critical moments/, { selector: "summary" }));
+    await user.click(screen.getAllByRole("button", { name: "Practice this position" })[4]);
+    await user.click(screen.getByRole("button", { name: "Kxf2 Choose this move" }));
+    expect(screen.getByText("Try another idea")).toBeVisible();
+    expect(screen.getByText(/Illegal: Black's queen on b6 protects/)).toBeVisible();
+    await user.click(screen.getByRole("button", { name: "Show coached move" }));
+    await user.click(screen.getByRole("button", { name: "Continue" }));
+    expect(screen.getByText("Positions attempted").nextElementSibling).toHaveTextContent("1");
+    expect(screen.getByText("Revealed").nextElementSibling).toHaveTextContent("1");
+  });
   it("asks before a restart discards run progress", async () => {
     const user = userEvent.setup();
     render(<ChessLab />);

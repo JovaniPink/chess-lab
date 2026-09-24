@@ -291,7 +291,9 @@ export function ChessLab() {
       const move = chess.move(c.san);
       submit(move.from, move.to, move.promotion);
     } catch {
-      setMessage("This candidate cannot be played from the lesson position.");
+      if (run?.phase !== "answering") return;
+      send({ type: "SUBMIT_ANSWER", answer: { san: c.san, fen: chess.fen(), correct: false } });
+      setMessage(`${c.san} submitted. It cannot be played from the lesson position.`);
     }
   }
   function reveal() {
