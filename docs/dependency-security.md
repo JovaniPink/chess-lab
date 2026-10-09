@@ -21,10 +21,11 @@ path to `extract-zip` or `image-size` and requires the Netlify 27.8 toolchain mi
 `browserslist`, `js-yaml`, and `fflate` are locked at fixed versions within their declared
 transitive ranges.
 
-`sharp@0.35.4` is enforced through npm overrides because Netlify Images 2.0.1 still installs IPX
+`sharp@0.35.5` is enforced through npm overrides because Netlify Images 2.0.1 still installs IPX
 3.1.1 with a `^0.34.3` range, and 0.35.4 is the first release outside `GHSA-rgj7-g3m4-5g8c`. The
-canonical tests and packaged Netlify artifact tests validate the override; remove it after Netlify
-Images adopts IPX 4 or another fixed Sharp range.
+October 9 patch raises that existing override to 0.35.5 to address
+`GHSA-wq5f-xc86-pv6w` (librsvg). The canonical tests and packaged Netlify artifact tests
+validate the override; remove it after Netlify Images adopts IPX 4 or another fixed Sharp range.
 
 Recheck whenever Netlify CLI, `@netlify/dev`, `@netlify/functions-dev`, Netlify Images, or the npm
 advisory report changes.
