@@ -61,7 +61,7 @@
     "clsx": "2.1.1",
     "lucide-react": "1.31.0",
     "motion": "12.43.0",
-    "next": "16.3.3",
+    "next": "16.3.8",
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "react-hook-form": "7.85.0",
@@ -82,7 +82,7 @@
     "@vitejs/plugin-react": "6.0.5",
     "@vitejs/plugin-rsc": "0.5.34",
     "eslint": "9.39.5",
-    "eslint-config-next": "16.3.3",
+    "eslint-config-next": "16.3.8",
     "eslint-plugin-unicorn": "65.0.1",
     "jsdom": "30.0.1",
     "netlify-cli": "27.8.1",
@@ -96,7 +96,7 @@
     "vitest": "4.1.11"
   },
   "overrides": {
-    "sharp": "0.35.4"
+    "sharp": "0.35.5"
   },
   "type": "module",
   "displayName": "Chess Lab by Measured Studios"

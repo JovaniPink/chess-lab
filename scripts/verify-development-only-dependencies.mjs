@@ -34,7 +34,7 @@ function isAtLeast(version, minimum) {
 }
 
 function isFixedSharp(version) {
-  return isAtLeast(version, "0.35.4");
+  return isAtLeast(version, "0.35.5");
 }
 
 function visit(dependencies = {}, path = []) {
@@ -104,6 +104,6 @@ if (violations.length > 0) {
   process.exitCode = 1;
 } else {
   console.log(
-    "Verified: extract-zip and image-size are absent from the lockfile; Sharp is >=0.35.4; the supported Netlify 27.8 toolchain is locked.",
+    "Verified: extract-zip and image-size are absent from the lockfile; Sharp is >=0.35.5; the supported Netlify 27.8 toolchain is locked.",
   );
 }
