@@ -2,7 +2,7 @@
   "name": "jovani-chess-lab",
   "version": "0.1.0",
   "private": true,
-  "packageManager": "npm@12.0.2+sha224.4c4977784242293bf5a4f80d28aab2d001ba8a7a4532285591a158aa",
+  "packageManager": "npm@12.2.1+sha512.6ca0a6151553fc107e60f1186d9c10d57508dcde6de31292a54d4cc4e8e8ef3de25b3281274657442d7115d10df930bb3794ddcb0681cdfd9d317189abf7b63d",
   "devEngines": {
     "runtime": {
       "name": "node",
@@ -11,7 +11,7 @@
     },
     "packageManager": {
       "name": "npm",
-      "version": "12.0.2",
+      "version": "12.2.1",
       "onFail": "warn"
     }
   },
@@ -54,49 +54,49 @@
     "format:check": "prettier --check ."
   },
   "dependencies": {
-    "@hookform/resolvers": "5.7.1",
+    "@hookform/resolvers": "5.9.2",
     "@xstate/react": "6.1.0",
     "chess.js": "1.4.0",
     "class-variance-authority": "0.7.1",
     "clsx": "2.1.1",
-    "lucide-react": "1.31.0",
+    "lucide-react": "1.61.0",
     "motion": "12.43.0",
     "next": "16.3.3",
-    "react": "19.2.8",
-    "react-dom": "19.2.8",
-    "react-hook-form": "7.85.0",
-    "tailwind-merge": "3.6.0",
-    "xstate": "5.32.5",
-    "zod": "4.4.3"
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "react-hook-form": "7.91.0",
+    "tailwind-merge": "3.7.0",
+    "xstate": "5.33.3",
+    "zod": "4.6.7"
   },
   "devDependencies": {
-    "@opentelemetry/api": "1.9.1",
+    "@opentelemetry/api": "1.10.0",
     "@tailwindcss/postcss": "4.3.3",
     "@testing-library/jest-dom": "7.0.1",
     "@testing-library/react": "16.3.3",
-    "@testing-library/user-event": "14.6.6",
-    "@types/node": "22.20.1",
-    "@types/react": "19.2.18",
-    "@types/react-dom": "19.2.5",
+    "@testing-library/user-event": "14.6.8",
+    "@types/node": "22.20.5",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
     "@typescript/native": "npm:typescript@7.0.2",
-    "@vitejs/plugin-react": "6.0.5",
-    "@vitejs/plugin-rsc": "0.5.34",
+    "@vitejs/plugin-react": "6.1.2",
+    "@vitejs/plugin-rsc": "0.5.38",
     "eslint": "9.39.5",
-    "eslint-config-next": "16.3.3",
+    "eslint-config-next": "16.4.3",
     "eslint-plugin-unicorn": "65.0.1",
-    "jsdom": "30.0.1",
-    "netlify-cli": "27.8.1",
+    "jsdom": "30.1.3",
+    "netlify-cli": "27.14.2",
     "nitro": "3.0.260610-beta",
-    "prettier": "3.9.6",
-    "react-server-dom-webpack": "19.2.8",
+    "prettier": "3.9.10",
+    "react-server-dom-webpack": "19.3.1",
     "tailwindcss": "4.3.3",
     "typescript": "6.0.3",
-    "vinext": "1.0.0-beta.6",
+    "vinext": "1.3.0",
     "vite": "8.2.1",
-    "vitest": "4.1.11"
+    "vitest": "4.1.12"
   },
   "overrides": {
-    "sharp": "0.35.4"
+    "sharp": "0.35.5"
   },
   "type": "module",
   "displayName": "Chess Lab by Measured Studios"
