@@ -54,7 +54,7 @@
     "format:check": "prettier --check ."
   },
   "dependencies": {
-    "@hookform/resolvers": "5.7.1",
+    "@hookform/resolvers": "6.0.2",
     "@xstate/react": "6.1.0",
     "chess.js": "1.4.0",
     "class-variance-authority": "0.7.1",
