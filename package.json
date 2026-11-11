@@ -88,7 +88,7 @@
     "netlify-cli": "27.8.1",
     "nitro": "3.0.260610-beta",
     "prettier": "3.9.6",
-    "react-server-dom-webpack": "19.2.8",
+    "react-server-dom-webpack": "19.3.1",
     "tailwindcss": "4.3.3",
     "typescript": "6.0.3",
     "vinext": "1.0.0-beta.6",
